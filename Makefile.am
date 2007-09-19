@@ -2,7 +2,7 @@
 
 EXTRA_DIST = xsel.1x
 
-CFLAGS = @X_CFLAGS@
+AM_CFLAGS = @X_CFLAGS@
 LDADD = @X_LIBS@ @X_PRE_LIBS@ -lXext -lX11 @X_EXTRA_LIBS@
 
 bin_PROGRAMS = xsel
