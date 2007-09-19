@@ -1,0 +1,5 @@
+
+Thu Oct 25 13:52:36 EST 2001 Conrad Parker <conrad@vergenet.net>
+
+	* Ported build to use automake+autoconf
+	* Added README etc.

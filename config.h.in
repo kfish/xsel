@@ -1,0 +1,112 @@
+/* config.h.in.  Generated automatically from configure.ac by autoheader.  */
+
+/* Define if you have the `dup2' function. */
+#undef HAVE_DUP2
+
+/* Define if you have the <errno.h> header file. */
+#undef HAVE_ERRNO_H
+
+/* Define if you have the <fcntl.h> header file. */
+#undef HAVE_FCNTL_H
+
+/* Define if you have the `fork' function. */
+#undef HAVE_FORK
+
+/* Define if you have the <inttypes.h> header file. */
+#undef HAVE_INTTYPES_H
+
+/* Define if your system has a working `malloc' function. */
+#undef HAVE_MALLOC
+
+/* Define if you have the <memory.h> header file. */
+#undef HAVE_MEMORY_H
+
+/* Define if you have the `select' function. */
+#undef HAVE_SELECT
+
+/* Define if you have the <stdint.h> header file. */
+#undef HAVE_STDINT_H
+
+/* Define if you have the <stdlib.h> header file. */
+#undef HAVE_STDLIB_H
+
+/* Define if you have the `strdup' function. */
+#undef HAVE_STRDUP
+
+/* Define if you have the `strerror' function. */
+#undef HAVE_STRERROR
+
+/* Define if you have the <strings.h> header file. */
+#undef HAVE_STRINGS_H
+
+/* Define if you have the <string.h> header file. */
+#undef HAVE_STRING_H
+
+/* Define if you have the `strtol' function. */
+#undef HAVE_STRTOL
+
+/* Define if `st_blksize' is member of `struct stat'. */
+#undef HAVE_STRUCT_STAT_ST_BLKSIZE
+
+/* Define if you have the <sys/stat.h> header file. */
+#undef HAVE_SYS_STAT_H
+
+/* Define if you have the <sys/time.h> header file. */
+#undef HAVE_SYS_TIME_H
+
+/* Define if you have the <sys/types.h> header file. */
+#undef HAVE_SYS_TYPES_H
+
+/* Define if you have the <unistd.h> header file. */
+#undef HAVE_UNISTD_H
+
+/* Define if you have the `vfork' function. */
+#undef HAVE_VFORK
+
+/* Define if you have the <vfork.h> header file. */
+#undef HAVE_VFORK_H
+
+/* Define if `fork' works. */
+#undef HAVE_WORKING_FORK
+
+/* Define if `vfork' works. */
+#undef HAVE_WORKING_VFORK
+
+/* Name of package */
+#undef PACKAGE
+
+/* Define as the return type of signal handlers (`int' or `void'). */
+#undef RETSIGTYPE
+
+/* Define if you have the ANSI C header files. */
+#undef STDC_HEADERS
+
+/* Define if you can safely include both <sys/time.h> and <time.h>. */
+#undef TIME_WITH_SYS_TIME
+
+/* Version number of package */
+#undef VERSION
+
+/* Define if the X Window System is missing or not being used. */
+#undef X_DISPLAY_MISSING
+
+/* Define if you need to in order for stat and other things to work. */
+#undef _POSIX_SOURCE
+
+/* Define to empty if `const' does not conform to ANSI C. */
+#undef const
+
+/* Define to `int' if <sys/types.h> doesn't define. */
+#undef gid_t
+
+/* Define to `int' if <sys/types.h> does not define. */
+#undef pid_t
+
+/* Define to `unsigned' if <sys/types.h> does not define. */
+#undef size_t
+
+/* Define to `int' if <sys/types.h> doesn't define. */
+#undef uid_t
+
+/* Define as `fork' if `vfork' does not work. */
+#undef vfork
