@@ -1,0 +1,134 @@
+.TH XSEL 1 "July 2001"
+.SH NAME
+xsel \- manipulate the X selection.
+.SH SYNOPSIS
+.B xsel
+[\fIOPTION\fR]...
+.SH DESCRIPTION
+.PP
+Retrieve and set the X selection.
+.PP
+The X server maintains three selections, called \fIPRIMARY\fR,
+\fISECONDARY\fR and \fICLIPBOARD\fR. The PRIMARY selection is conventionally
+used to implement copying and pasting via the middle mouse button. The
+SECONDARY and CLIPBOARD selections are less frequently used by application
+programs. This program operates on the PRIMARY selection unless otherwise
+specified.
+.PP
+By default, this program outputs the selection without modification if both
+standard input and standard output are terminals (ttys). Otherwise, the
+current selection is output if standard output is not a terminal
+(tty), and the selection is set from standard input if standard input
+is not a terminal (tty). If any input or output options are given then
+the program behaves only in the requested mode.
+.PP
+If both input and output is required then the previous selection is
+output before being replaced by the contents of standard input.
+
+.PP
+\fBInput options\fR
+.TP
+\fB\-a\fR, \fB\-\-append\fR
+append standard input to the selection. Implies \fB\-i\fR.
+.TP
+\fB\-f\fR, \fB\-\-follow\fR
+append to selection as standard input grows. Implies \fB\-i\fR.
+.TP
+\fB\-i\fR, \fB\-\-input\fR
+read standard input into the selection.
+
+.PP
+\fBOutput options\fR
+.TP
+\fB\-o\fR, \fB\-\-output\fR
+write the selection to standard output.
+
+.PP
+\fBAction options\fR
+.TP
+\fB\-c\fR, \fB\-\-clear\fR
+clear the selection. Overrides all \fIinput\fR options.
+.TP
+\fB\-d\fR, \fB\-\-delete\fR
+Request that the current selection be deleted. This not only clears the
+selection, but also requests to the program in which the selection
+resides that the selected contents be deleted. Overrides all \fIinput\fR
+options.
+
+.PP
+\fBSelection options\fR
+.TP
+\fB\-p\fR, \fB\-\-primary\fR
+operate on the PRIMARY selection (default).
+.TP
+\fB\-s\fR, \fB\-\-secondary\fR
+operate on the SECONDARY selection.
+.TP
+\fB\-b\fR, \fB\-\-clipboard\fR
+operate on the CLIPBOARD selection.
+
+.TP
+\fB\-k\fR, \fB\-\-keep\fR
+Do not modify the selections, but make the PRIMARY and SECONDARY selections
+persist even after the programs they were selected in exit. (Conventionally,
+the CLIPBOARD selection is persisted by a separate special purpose program
+such as \fIxclipboard(1)\fR). Ignores all \fIinput\fR and \fIoutput\fR
+options.
+.TP
+\fB\-x\fR, \fB\-\-exchange\fR
+exchange the PRIMARY and SECONDARY selections. Ignores all \fIinput\fR
+and \fIoutput\fR options.
+
+.PP
+\fBX options\fR
+.TP
+\fB\-d\fR \fIdisplayname\fR, \fB\-\-display\fR \fIdisplayname\fR
+specify the server to use; see \fIX(1)\fP.
+.TP
+\fB\-t\fR \fIms\fR, \fB\-\-selectionTimeout\fR \fIms\fR
+Specify the timeout in milliseconds within which the selection must be
+retrieved. A value of \fB0\fR (zero) specifies no timeout (default).
+
+.PP
+\fBMiscellaneous options\fR
+.TP
+\fB\-l\fR \fIfilename\fR, \fB\-\-logfile\fR \fIfilename\fR
+Specify the file to log errors to when detached. (Default
+\fI$HOME/.xsel.log\fR)
+.TP
+\fB\-n\fR, \fB\-\-nodetach\fR
+Do not detach from the controlling terminal. Without this option, xsel will
+fork to become a background process in \fIinput\fR, \fIexchange\fR and
+\fIkeep\fR modes.
+.TP
+\fB\-h\fR, \fB\-\-help\fR
+display usage information and exit
+.TP
+\fB\-v\fR, \fB\-\-verbose\fR
+Print informative messages. Additional instances of \fI-v\fR raise the
+debugging level, ie. print more information.
+.TP
+\fB\-v\fR, \fB\-\-version\fR
+output version information and exit
+.PP
+.SH NOTES
+.PP
+\fIThere is no X selection buffer.\fR The selection mechanism in X11 is
+an interclient communication mediated by the X server each time any
+program wishes to know the selection contents, eg. to perform a middle
+mouse button paste. In order to implement modification of the selection(s)
+(in \fIinput\fR, \fIkeep\fR and \fIexchange\fR modes) this program detaches
+from the terminal, spawning a child process to supply the new selection(s)
+on demand. This child exits immediately when any other program takes over
+the selection(s), eg. when the user next selects some text in a terminal
+window or by running \fBxsel -c\fR.
+.PP
+.SH STANDARDS
+xsel conforms to the Inter-Client Communication Conventions Manual
+Version 2.0 (ICCCM2).
+.PP
+.SH "SEE ALSO"
+X(1), Xserver(1), xset(1), xclipboard(1), xpaste(1)
+.BR
+.SH AUTHOR
+Conrad Parker <conrad@vergenet.net>, July 2001
