@@ -80,6 +80,18 @@ exchange the PRIMARY and SECONDARY selections. Ignores all \fIinput\fR
 and \fIoutput\fR options.
 
 .PP
+\fBEncoding options\fR
+.TP
+\fB\-u\fR, \fB\-\-utf8\fR 
+Request selection in UTF8 if possible.
+This option is useful when working with selections in national
+(non Latin-1) charsets. If your X-server and target application
+support UTF8_STRING exchange, then selection is returned as
+UTF8 string. If your X-server doesn't support this extension,
+option has no effect. If target application doesn's support
+UTF8 selection target, empty selection is returned.
+
+.PP
 \fBX options\fR
 .TP
 \fB\-d\fR \fIdisplayname\fR, \fB\-\-display\fR \fIdisplayname\fR
@@ -108,7 +120,7 @@ display usage information and exit
 Print informative messages. Additional instances of \fI-v\fR raise the
 debugging level, ie. print more information.
 .TP
-\fB\-v\fR, \fB\-\-version\fR
+\fB\-\-version\fR
 output version information and exit
 .PP
 .SH NOTES

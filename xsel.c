@@ -56,11 +56,14 @@ static Atom delete_atom; /* The DELETE atom */
 static Atom incr_atom; /* The INCR atom */
 static Atom null_atom; /* The NULL atom */
 static Atom text_atom; /* The TEXT atom */
+static Atom utf8_atom; /* The UTF8 atom */
+static Atom local_target; /* UTF8_STRING or STRING */
 
 /* Number of selection targets served by this.
- * (MULTIPLE, INCR, TARGETS, TIMESTAMP, DELETE, TEXT and STRING) */
-#define NUM_TARGETS 7
-static Atom supported_targets[NUM_TARGETS];
+ * (MULTIPLE, INCR, TARGETS, TIMESTAMP, DELETE, TEXT, UTF8_STRING and STRING) */
+#define MAX_NUM_TARGETS 8
+static int NUM_TARGETS;
+static Atom supported_targets[MAX_NUM_TARGETS];
 
 /* do_follow: Follow mode for output */
 static Boolean do_follow = False;
@@ -108,6 +111,8 @@ usage (void)
   printf ("  -c, --clear           Clear the selection\n");
   printf ("  -d, --delete          Request that the selection be cleared and that\n");
   printf ("                        the application owning it delete its contents\n\n");
+  printf ("Encoding options\n");
+  printf ("  -u, --utf8            Request selection in UTF-8 if possible\n\n");
   printf ("Selection options\n");
   printf ("  -p, --primary         Operate on the PRIMARY selection (default)\n");
   printf ("  -s, --secondary       Operate on the SECONDARY selection\n");
@@ -225,6 +230,7 @@ get_atom_name (Atom atom)
   if (atom == incr_atom) return "INCR";
   if (atom == null_atom) return "NULL";
   if (atom == text_atom) return "TEXT";
+  if (utf8_atom!=XA_STRING && atom == utf8_atom) return "UTF8_STRING";
   if (atom == XInternAtom (display, "XSEL_DATA", True)) return "XSEL_DATA";
 
   return "<unknown atom>";
@@ -597,7 +603,7 @@ wait_selection (Atom selection, Atom request_target)
           retval = wait_incr_selection (selection, &event.xselection,
                                         *(int *)value);
           keep_waiting = False;
-        } else if (target != XA_STRING && request_target != delete_atom) {
+        } else if (target != utf8_atom && target != XA_STRING && request_target != delete_atom) {
           /* Report non-TEXT atoms */
           print_debug (D_WARN, "Selection (type %s) is not a string.",
                        get_atom_name (target));
@@ -1265,6 +1271,22 @@ handle_string (Display * display, Window requestor, Atom property,
 }
 
 /*
+ * handle_utf8_string (display, requestor, property, sel)
+ *
+ * Handle a UTF8_STRING request; setting 'sel' as the data
+ */
+static HandleResult
+handle_utf8_string (Display * display, Window requestor, Atom property,
+               unsigned char * sel, Atom selection, Time time,
+               MultTrack * mparent)
+{
+  return
+    change_property (display, requestor, property, utf8_atom, 8,
+                     PropModeReplace, sel, strlen(sel),
+                     selection, time, mparent);
+}
+
+/*
  * handle_delete (display, requestor, property)
  *
  * Handle a DELETE request.
@@ -1309,6 +1331,9 @@ process_multiple (MultTrack * mt, Boolean do_parent)
                                  mt->sel, mt->selection, mt->time, mt);
     } else if (mt->atoms[i] == XA_STRING || mt->atoms[i] == text_atom) {
       retval |= handle_string (mt->display, mt->requestor, mt->atoms[i+1],
+                               mt->sel, mt->selection, mt->time, mt);
+    } else if (mt->atoms[i] == utf8_atom) {
+      retval |= handle_utf8_string (mt->display, mt->requestor, mt->atoms[i+1],
                                mt->sel, mt->selection, mt->time, mt);
     } else if (mt->atoms[i] == delete_atom) {
       retval |= handle_delete (mt->display, mt->requestor, mt->atoms[i+1]);
@@ -1481,6 +1506,11 @@ handle_selection_request (XEvent event, unsigned char * sel)
     /* Received STRING or TEXT request */
     ev.property = xsr->property;
     hr = handle_string (ev.display, ev.requestor, ev.property, sel,
+                        ev.selection, ev.time, NULL);
+  } else if (ev.target == utf8_atom) {
+    /* Received UTF8_STRING request */
+    ev.property = xsr->property;
+    hr = handle_utf8_string (ev.display, ev.requestor, ev.property, sel,
                         ev.selection, ev.time, NULL);
   } else if (ev.target == delete_atom) {
     /* Received DELETE request */
@@ -1694,8 +1724,8 @@ keep_selections (void)
 {
   unsigned char * text1, * text2;
 
-  text1 = get_selection (XA_PRIMARY, XA_STRING);
-  text2 = get_selection (XA_SECONDARY, XA_STRING);
+  text1 = get_selection (XA_PRIMARY, local_target);
+  text2 = get_selection (XA_SECONDARY, local_target);
 
   set_selection_pair__daemon (text1, text2);
 }
@@ -1712,8 +1742,8 @@ exchange_selections (void)
 {
   unsigned char * text1, * text2;
 
-  text1 = get_selection (XA_PRIMARY, XA_STRING);
-  text2 = get_selection (XA_SECONDARY, XA_STRING);
+  text1 = get_selection (XA_PRIMARY, local_target);
+  text2 = get_selection (XA_SECONDARY, local_target);
 
   set_selection_pair__daemon (text2, text1);
 }
@@ -1752,6 +1782,7 @@ main(int argc, char *argv[])
   unsigned char * old_sel = NULL, * new_sel = NULL;
   char * display_name = NULL;
   long timeout_ms = 0L;
+  int need_utf8 = False;
 
   progname = argv[0];
 
@@ -1777,6 +1808,8 @@ main(int argc, char *argv[])
     } else if (OPT("--append") || OPT("-a")) {
       do_append = True;
       dont_output = True;
+    } else if (OPT("--utf8") || OPT("-u")) {
+      need_utf8 = True;
     } else if (OPT("--input") || OPT("-i")) {
       do_input = True;
       dont_output = True;
@@ -1879,35 +1912,64 @@ main(int argc, char *argv[])
   if (test_atom != XA_SECONDARY)
     print_debug (D_WARN, "XA_SECONDARY not named \"SECONDARY\"\n");
 
+  NUM_TARGETS=0;
   /* Get the TIMESTAMP atom */
   timestamp_atom = XInternAtom (display, "TIMESTAMP", False);
   supported_targets[s++] = timestamp_atom;
+  NUM_TARGETS++;
 
   /* Get the MULTIPLE atom */
   multiple_atom = XInternAtom (display, "MULTIPLE", False);
   supported_targets[s++] = multiple_atom;
+  NUM_TARGETS++;
 
   /* Get the TARGETS atom */
   targets_atom = XInternAtom (display, "TARGETS", False);
   supported_targets[s++] = targets_atom;
+  NUM_TARGETS++;
 
   /* Get the DELETE atom */
   delete_atom = XInternAtom (display, "DELETE", False);
   supported_targets[s++] = delete_atom;
+  NUM_TARGETS++;
 
   /* Get the INCR atom */
   incr_atom = XInternAtom (display, "INCR", False);
   supported_targets[s++] = incr_atom;
+  NUM_TARGETS++;
 
   /* Get the NULL atom */
   null_atom = XInternAtom (display, "NULL", False);
+  NUM_TARGETS++;
 
   /* Get the TEXT atom */
   text_atom = XInternAtom (display, "TEXT", False);
   supported_targets[s++] = text_atom;
+  NUM_TARGETS++;
+
+  /* Get the UTF8_STRING atom */
+  utf8_atom = XInternAtom (display, "UTF8_STRING", True);
+  if( utf8_atom != None)
+    {
+    supported_targets[s++] = utf8_atom;
+    NUM_TARGETS++;
+    }
+  else
+    {
+    utf8_atom = XA_STRING;
+    }
 
   supported_targets[s++] = XA_STRING;
+  NUM_TARGETS++;
 
+  if( need_utf8 == True)
+    {
+    local_target=utf8_atom;
+    }
+  else
+    {
+    local_target=XA_STRING;
+    }
   /* handle selection keeping and exit if so */
   if (do_keep) {
     keep_selections ();
@@ -1928,7 +1990,7 @@ main(int argc, char *argv[])
   /* handle output modes */
   if (do_output || !dont_output) {
     /* Get the current selection */
-    old_sel = get_selection (selection, XA_STRING);
+    old_sel = get_selection (selection, local_target);
     if (old_sel) printf ("%s", old_sel);
   }
 
@@ -1940,7 +2002,7 @@ main(int argc, char *argv[])
   }
   else if (do_input || !dont_input) {
     if (do_append) {
-      if (!old_sel) old_sel = get_selection (selection, XA_STRING);
+      if (!old_sel) old_sel = get_selection (selection, local_target);
       new_sel = copy_sel (old_sel);
     }
     new_sel = initialise_read (new_sel);
