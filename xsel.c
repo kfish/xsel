@@ -590,7 +590,9 @@ wait_selection (Atom selection, Atom request_target)
         debug_property (D_TRACE, event.xselection.requestor,
                         event.xselection.property, target, length);
 
-        if (target == incr_atom) {
+        if (request_target == delete_atom && value == NULL) {
+          keep_waiting = False;
+        } else if (target == incr_atom) {
           /* Handle INCR transfers */
           retval = wait_incr_selection (selection, &event.xselection,
                                         *(int *)value);
