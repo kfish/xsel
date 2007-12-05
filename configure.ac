@@ -20,6 +20,14 @@ AC_PATH_XTRA
 
 #AC_CHECK_LIB([X11], [XOpenDisplay])
 
+# Error out on compile warnings
+dnl Add some useful warnings if we have gcc.
+dnl changequote(,)dnl
+if test "x$ac_cv_prog_gcc" = xyes ; then
+  CFLAGS="$CFLAGS -fno-strict-aliasing -Wall -Werror -g -std=gnu99 -Wdeclaration-after-statement -Wno-unused"
+fi
+dnl changequote([,])dnl
+
 # Checks for header files.
 AC_HEADER_STDC
 AC_CHECK_HEADERS([errno.h fcntl.h stdlib.h string.h sys/time.h unistd.h])

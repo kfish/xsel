@@ -216,7 +216,7 @@ print_err (const char * fmt, ...)
  *
  * Returns a string with a printable name for the Atom 'atom'.
  */
-static unsigned char *
+static char *
 get_atom_name (Atom atom)
 {
   if (atom == None) return "None";
@@ -265,6 +265,27 @@ xs_malloc (size_t size)
 
   return ret;
 }
+
+/*
+ * xs_strdup (s)
+ *
+ * strdup wrapper for unsigned char *
+ */
+#define xs_strdup(s) ((unsigned char *) strdup ((const char *)s))
+
+/*
+ * xs_strlen (s)
+ *
+ * strlen wrapper for unsigned char *
+ */
+#define xs_strlen(s) (strlen ((const char *) s))
+
+/*
+ * xs_strncpy (s)
+ *
+ * strncpy wrapper for unsigned char *
+ */
+#define xs_strncpy(dest,src,n) (strncpy ((char *)dest, (const char *)src, n))
 
 /*
  * get_homedir ()
@@ -487,14 +508,14 @@ get_append_property (XSelectionEvent * xsl, unsigned char ** buffer,
     print_debug (D_TRACE, "Got zero length property; end of INCR transfer");
     return False;
   } else if (format == 8) {
-    if (*offset + length > *alloc) {
+    if ((unsigned long)*offset + length > (unsigned long)*alloc) {
       *alloc = *offset + length;
       if ((*buffer = realloc (*buffer, *alloc)) == NULL) {
         exit_err ("realloc error");
       }
     }
     ptr = *buffer + *offset;
-    strncpy (ptr, value, length);
+    xs_strncpy (ptr, value, length);
     *offset += length;
     print_debug (D_TRACE, "Appended %d bytes to buffer\n", length);
   } else {
@@ -611,7 +632,7 @@ wait_selection (Atom selection, Atom request_target)
           retval = NULL;
           keep_waiting = False;
         } else {
-          retval = strdup (value);
+          retval = xs_strdup (value);
           XFree (value);
           keep_waiting = False;
         }
@@ -699,8 +720,8 @@ copy_sel (unsigned char * s)
 {
   unsigned char * new_sel = NULL;
 
-  new_sel = strdup (s);
-  current_alloc = total_input = strlen (s);
+  new_sel = xs_strdup (s);
+  current_alloc = total_input = xs_strlen (s);
 
   return new_sel;
 }
@@ -1266,7 +1287,7 @@ handle_string (Display * display, Window requestor, Atom property,
 {
   return
     change_property (display, requestor, property, XA_STRING, 8,
-                     PropModeReplace, sel, strlen(sel),
+                     PropModeReplace, sel, xs_strlen(sel),
                      selection, time, mparent);
 }
 
@@ -1282,7 +1303,7 @@ handle_utf8_string (Display * display, Window requestor, Atom property,
 {
   return
     change_property (display, requestor, property, utf8_atom, 8,
-                     PropModeReplace, sel, strlen(sel),
+                     PropModeReplace, sel, xs_strlen(sel),
                      selection, time, mparent);
 }
 
