@@ -1809,9 +1809,15 @@ main(int argc, char *argv[])
 
   /* Specify default behaviour based on input and output file types */
   if (isatty(0) && isatty(1)) {
+    /* Interactive mode: both stdin and stdout are ttys */
     do_input = False; dont_input = True;
     do_output = False; dont_output = False;
+  } else if (!isatty(0) && !isatty(1)) {
+    /* Scripted: both stdin and stdout are NOT ttys */
+    do_input = False; dont_input = True;
+    do_output = True; dont_output = False;
   } else {
+    /* Interactive, pipelined: one of stdin or stdout is a tty */
     do_input = !isatty(0); dont_input = !do_input;
     do_output = !isatty(1); dont_output = !do_output;
   }
