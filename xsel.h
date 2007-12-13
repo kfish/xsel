@@ -11,7 +11,6 @@
  * implied warranty.
  */
 
-#define VERSION "0.9"
 #define AUTHOR "Conrad Parker <conrad@vergenet.net>"
 
 /* Default debug level (ship at 0) */
