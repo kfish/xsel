@@ -114,8 +114,6 @@ usage (void)
   printf ("  -c, --clear           Clear the selection\n");
   printf ("  -d, --delete          Request that the selection be cleared and that\n");
   printf ("                        the application owning it delete its contents\n\n");
-  printf ("Encoding options\n");
-  printf ("  -u, --utf8            Request selection in UTF-8 if possible\n\n");
   printf ("Selection options\n");
   printf ("  -p, --primary         Operate on the PRIMARY selection (default)\n");
   printf ("  -s, --secondary       Operate on the SECONDARY selection\n");
@@ -1832,7 +1830,6 @@ main(int argc, char *argv[])
   unsigned char * old_sel = NULL, * new_sel = NULL;
   char * display_name = NULL;
   long timeout_ms = 0L;
-  int need_utf8 = False;
 
   progname = argv[0];
 
@@ -1864,8 +1861,6 @@ main(int argc, char *argv[])
     } else if (OPT("--append") || OPT("-a")) {
       do_append = True;
       dont_output = True;
-    } else if (OPT("--utf8") || OPT("-u")) {
-      need_utf8 = True;
     } else if (OPT("--input") || OPT("-i")) {
       do_input = True;
       dont_output = True;
