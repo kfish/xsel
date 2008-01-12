@@ -1,1 +1,5 @@
 Conrad Parker <conrad@vergenet.net>
+	- General implementation, ICCCM wrangling
+
+Sergey Kogan <kogan@sklad.bacon.ru>
+	- UTF-8 support
