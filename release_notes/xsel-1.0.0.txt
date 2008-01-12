@@ -1,0 +1,63 @@
+xsel 1.0.0 Release
+------------------
+
+XSel is a command-line program for getting and setting the contents of the X
+selection. Normally this is only accessible by manually highlighting
+information and pasting it with the middle mouse button.
+
+This release is available as a source tarball at:
+
+  http://www.vergenet.net/~conrad/software/xsel/download/xsel-1.0.0.tar.gz
+
+New in this release
+-------------------
+
+This release adds UTF-8 support and fixes various bugs.
+
+Details:
+
+	* Support for retrieving and serving UTF8_STRING atoms. When
+	  retrieving a selection, xsel determines whether or not the
+	  current selection owner supports UTF8_STRING and uses that if
+	  possible.
+          + Debian bug #231413: Doesn't work correctly in a UTF-8 environment 
+
+	* Fixes for the following bugs:
+	  + Segfault when attempting to delete the selection that xsel owns,
+	    eg: echo "hello, world" | ./xsel -i && ./xsel -d
+	  + Debian bug #444638: xsel clears buffer instead of outputting
+                                when backgrounded. 
+          + Debian bug #203925: xsel manpage double option 
+
+
+About XSel
+----------
+
+XSel's most common use is to set or get the X selection:
+
+	* To read a file into the X selection: xsel < file 
+	* To write the X selection to a file:  xsel > file 
+
+You can use xsel in shell scripts and desktop keybindings, so that the
+contents of the X selection are available to command arguments:
+
+	    mozilla --remote "openurl(`xsel`)"
+
+XSel can also be used for some more complicated tasks:
+
+	* To append to the X selection:        xsel --append < file 
+	* To follow a growing file:            xsel --follow < file 
+
+You can even tell applications to delete their selected text:
+
+	* To delete the contents of the selection: xsel --delete 
+
+Other options include various ways of manipulating the secondary and
+clipboard selections, and of making the selection contents persist in
+memory. For full details see:
+
+    http://www.vergenet.net/~conrad/software/xsel/
+
+enjoy :-)
+
+Conrad Parker.

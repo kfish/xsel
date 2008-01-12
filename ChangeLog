@@ -1,3 +1,19 @@
+Sun Jan 13 00:11:01 JST 2008 Conrad Parker <conrad@vergenet.net>
+
+	* Version 1.0.0
+
+	* Support for retrieving and serving UTF8_STRING atoms. When
+	  retrieving a selection, xsel determines whether or not the
+	  current selection owner supports UTF8_STRING and uses that if
+	  possible.
+	  + Debian bug #231413: Doesn't work correctly in a UTF-8 environment
+
+	* Fixes for the following bugs:
+	  + Segfault when attempting to delete the selection that xsel owns,
+	    eg: echo "hello, world" | ./xsel -i && ./xsel -d
+	  + Debian bug #444638: xsel clears buffer instead of outputting
+	                        when backgrounded.
+	  + Debian bug #203925: xsel manpage double option
 
 Thu Oct 25 13:52:36 EST 2001 Conrad Parker <conrad@vergenet.net>
 
