@@ -1980,27 +1980,22 @@ main(int argc, char *argv[])
 
   /* Get the UTF8_STRING atom */
   utf8_atom = XInternAtom (display, "UTF8_STRING", True);
-  if( utf8_atom != None)
-    {
+  if(utf8_atom != None) {
     supported_targets[s++] = utf8_atom;
     NUM_TARGETS++;
-    }
-  else
-    {
+  } else {
     utf8_atom = XA_STRING;
-    }
+  }
 
   supported_targets[s++] = XA_STRING;
   NUM_TARGETS++;
 
-  if( need_utf8 == True)
-    {
+  if( need_utf8 == True) {
     local_target=utf8_atom;
-    }
-  else
-    {
+  } else {
     local_target=XA_STRING;
-    }
+  }
+
   /* handle selection keeping and exit if so */
   if (do_keep) {
     keep_selections ();
