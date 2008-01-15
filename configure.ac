@@ -1,6 +1,6 @@
 # Process this file with autoconf to produce a configure script.
 AC_INIT([xsel.c])
-AM_INIT_AUTOMAKE(xsel, 1.0.0)
+AM_INIT_AUTOMAKE(xsel, 1.0.0.svn20080115)
 AC_CONFIG_SRCDIR([xsel.c])
 AM_CONFIG_HEADER(config.h)
 
@@ -13,12 +13,12 @@ AC_PROG_MAKE_SET
 
 # Checks for libraries.
 AC_PATH_XTRA
-#AC_SUBST(X_CFLAGS)
-#AC_SUBST(X_LDFLAGS)
-#AC_SUBST(X_LIBS)
-#AC_SUBST(X_EXTRA_LIBS)
+AC_SUBST(X_CFLAGS)
+AC_SUBST(X_LDFLAGS)
+AC_SUBST(X_LIBS)
+AC_SUBST(X_EXTRA_LIBS)
 
-#AC_CHECK_LIB([X11], [XOpenDisplay])
+AC_CHECK_LIB([X11], [XOpenDisplay])
 
 # Error out on compile warnings
 dnl Add some useful warnings if we have gcc.
