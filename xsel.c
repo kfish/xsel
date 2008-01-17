@@ -61,9 +61,13 @@ static Atom incr_atom; /* The INCR atom */
 static Atom null_atom; /* The NULL atom */
 static Atom text_atom; /* The TEXT atom */
 static Atom utf8_atom; /* The UTF8 atom */
+static Atom compound_text_atom; /* The COMPOUND_TEXT atom */
 
 /* Number of selection targets served by this.
- * (MULTIPLE, INCR, TARGETS, TIMESTAMP, DELETE, TEXT, UTF8_STRING and STRING) */
+ * (MULTIPLE, INCR, TARGETS, TIMESTAMP, DELETE, TEXT, UTF8_STRING and STRING)
+ * NB. We do not currently serve COMPOUND_TEXT; we can retrieve it but do not
+ * perform charset conversion.
+ */
 #define MAX_NUM_TARGETS 8
 static int NUM_TARGETS;
 static Atom supported_targets[MAX_NUM_TARGETS];
@@ -626,6 +630,7 @@ wait_selection (Atom selection, Atom request_target)
                                         *(int *)value);
           keep_waiting = False;
         } else if (target != utf8_atom && target != XA_STRING &&
+                   target != compound_text_atom &&
                    request_target != delete_atom) {
           /* Report non-TEXT atoms */
           print_debug (D_WARN, "Selection (type %s) is not a string.",
@@ -2010,6 +2015,12 @@ main(int argc, char *argv[])
 
   supported_targets[s++] = XA_STRING;
   NUM_TARGETS++;
+
+  /* Get the COMPOUND_TEXT atom.
+   * NB. We do not currently serve COMPOUND_TEXT; we can retrieve it but
+   * do not perform charset conversion.
+   */
+  compound_text_atom = XInternAtom (display, "COMPOUND_TEXT", False);
 
   /* handle selection keeping and exit if so */
   if (do_keep) {
