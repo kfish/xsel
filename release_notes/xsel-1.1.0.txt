@@ -1,0 +1,65 @@
+xsel 1.1.0 Release
+------------------
+
+XSel is a command-line program for getting and setting the contents of the X
+selection. Normally this is only accessible by manually highlighting
+information and pasting it with the middle mouse button.
+
+This release is available as a source tarball at:
+
+  http://www.vergenet.net/~conrad/software/xsel/download/xsel-1.1.0.tar.gz
+
+New in this release
+-------------------
+
+This release adds basic support for COMPOUND_TEXT and fixes a configuration
+bug.
+
+Details:
+
+	* Support for retrieving COMPOUND_TEXT atoms. The COMPOUND_TEXT
+	  atom in ICCCM is an earlier method of handling international
+	  text; most modern applications use UTF8_STRING instead. The
+	  level of support included here allows xsel to retrieve a
+	  COMPOUND_TEXT selection verbatim, without performing charset
+	  conversion. When maintaining the selection, xsel does not
+	  currently attempt to serve COMPOUND_TEXT, but handles UTF8
+	  requests where possible.
+
+	  Thanks to Richard Zidlicky for reporting this bug and testing the
+	  fix.
+
+	* Fixed missing configuration checks for X11 libraries.
+	  Reported by Samuel Saint-Pettersen.
+
+About XSel
+----------
+
+XSel's most common use is to set or get the X selection:
+
+	* To read a file into the X selection: xsel < file 
+	* To write the X selection to a file:  xsel > file 
+
+You can use xsel in shell scripts and desktop keybindings, so that the
+contents of the X selection are available to command arguments:
+
+	    mozilla --remote "openurl(`xsel`)"
+
+XSel can also be used for some more complicated tasks:
+
+	* To append to the X selection:        xsel --append < file 
+	* To follow a growing file:            xsel --follow < file 
+
+You can even tell applications to delete their selected text:
+
+	* To delete the contents of the selection: xsel --delete 
+
+Other options include various ways of manipulating the secondary and
+clipboard selections, and of making the selection contents persist in
+memory. For full details see:
+
+    http://www.vergenet.net/~conrad/software/xsel/
+
+enjoy :-)
+
+Conrad Parker.
