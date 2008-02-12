@@ -340,7 +340,7 @@ gotpw:
  *
  * Perform the required procedure to become a daemon process, as
  * outlined in the Unix programming FAQ:
- * http://www.erlenstar.demon.co.uk/unix/faq_2.html#SEC16 
+ * http://www.steve.org.uk/Reference/Unix/faq_2.html#SEC16
  * and open a logfile.
  */
 static void
