@@ -3,7 +3,7 @@
 EXTRA_DIST = xsel.1x
 
 AM_CFLAGS = @X_CFLAGS@
-LDADD = @X_LIBS@ @X_PRE_LIBS@ -lXext -lX11 @X_EXTRA_LIBS@
+LDADD = @X_LIBS@ @X_PRE_LIBS@ @X_EXTRA_LIBS@
 
 bin_PROGRAMS = xsel
 
