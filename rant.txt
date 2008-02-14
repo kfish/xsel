@@ -1,0 +1,115 @@
+To: Sean Neakums <sneakums@xxxxxxxx>
+Subject: [chat] Re: [SLUG] Ximian / Gnome and Xalf
+From: Conrad Parker <conrad@xxxxxxxxxxxx>
+Date: Thu Jul 12 21:14:01 2001
+Cc: slug-chat@xxxxxxxxxxx
+User-agent: Mutt/1.2.5i
+
+On Thu, Jul 12, 2001 at 09:32:45AM +0100, Sean Neakums wrote:
+> >>>>> "JW" == Jeff Waugh <jdub@xxxxxxxxxxx> writes:
+> 
+>     JW> (The cynical prat in me says: Did you honestly expect a global
+>     JW> option, and software to interact and cooperate correctly on
+>     JW> this platform?)
+> 
+> Go read the ICCCM.  Come back when you're done crying.
+
+d00d, that document is devilspawn. I've recently spent my nights in pain
+implementing the selection mechanism. WHY OH WHY OH WHY? why me?  why did
+I choose to do this? and what sick evil twisted mind wrote this damn spec?
+I don't know why I'm working with it, I just wanted to make a useful program.
+I didn't know what I was getting myself in to. Nobody knows until they try
+it. And once you start, you're unable to stop. You can't stop, if you stop
+then you haven't completed it to spec. You can't fail on this, it's just a
+few pages of text, how can that be so hard? So what if they use Atoms for
+everything. So what if there's no explicit correlation between the target
+type of a SelectionNotify event and the type of the property it indicates?
+So what if the distinction is ambiguous? So what if the document is
+littered with such atrocities? It's not the spec's fault, the spec is
+authoritative. It's obviously YOUR (the implementor's) fault for
+misunderstanding it. If you didn't misunderstand it, you wouldn't be here
+complaining about it would you?
+
+It's all about understanding. Obviously, once you come to understand how
+the Atoms all fit together and exactly what the sequence of events for an
+incremental transfer is, and once you come to APPRECIATE how Atoms are so
+guilelessly delicately cast and communicated, its BEAUTIFUL it really is,
+I'm like SO GLAD I spent my last few evenings bashing my head against this
+damn document because now I can SEE CLEARLY and it all fits into place and
+you know what, it damn well better because you just know that if one Atom
+is out of place or you mistake the requestor's property's window with your
+property's requestor's window or you forget to delete an empty property at
+the right time, then, well, you're screwed and the whole thing is going to
+come tumbling down and then who's going to look like a fool, huh? The
+malicious bastards who designed ICCCM? NO! YOU you idiot fool coder for
+misunderstanding such a seemingly benign (maligned) document. It all makes
+perfect sense and who ever heard of synchronous error handling anyway?
+
+Name one fucking program in the whole world that uses MULTIPLE selections
+by choice? "ooh, for performance" well kiss my ass, if no other program
+is going to fucking care about my packet then why the fuck would I send
+such a thing? Optimize ZERO you fucking overengineered piece of shit. And
+XA_SECONDARY? Who the fuck uses the SECONDARY selection? and who actually
+queries TARGETS? All anyone ever fucking does with the selection is COPY
+TEXT!! That's what its fucking used for, that's what its good for so why
+is it such a fucking pain in the date to just share a fucking STRING? How
+about HOSTNAME? ooh I want to find a random HOSTNAME. I'll just ask
+whichever random process happens to be the selection owner right now to
+tell me it's fucking HOSTNAME! Yes, that sounds like a worthwhile bit of
+behaviour, let's just stick it in Xmu and hope noone notices for the next
+fucking 30 years. Same goes for the fricking IP_ADDRESS. Oh yeah, and
+the user's name. getenv("USER")? Nooooooooo! primitive idiot. Let's just
+query a random selection owner and hope it feels like telling us. Yes, yes,
+remind me to put THAT into production code; about as reliable as cleaning
+your motherboard with fried eel and it smells bad too. Can I have mine in
+Motif please?
+
+The ICCCM is the coding equivalent of the Medieval rack, except its
+advertised as some kind of X11 swingers party. "Wanna see hot sexy X
+applications getting it on with each other live? Wanna join in the
+action? Come and lie down here, we're all waiting for you!"
+
+ZZZZZZZZZZZzzzzzzzzip! Then they close the handcuffs and you realise
+you're lying in a cold dark room and all you can see are Atoms blocking
+you in and every time you think you understand CCRRreeeeeeeaAACK! they
+turn the rack a notch and you turn the page to find another 20 paragraphs
+of hellborne protocol fantasy.
+
+I've seen more elegant protocols in unlikely places. When blowflies fight
+over a pile of elephant shit, their pecking order is a more elegant
+protocol than ICCCM. You should watch it some time; if you're an X hacker,
+you'll see the beauty. You'll wanna dig right in there and get your hands
+dirty. Italian cabbies. English football hooligans -- if I want to get a
+short message to the other side of the field, do I use my ICCCM-based X
+Window PDA? no, I tell it to a random hooligan, poke him in the ribs and
+hope he gets riled up enough to start a riot. Will my message get to the
+other side? who knows? at least the resulting carnage will be more orderly
+than that fucking Interclient protocol.
+
+ALL OR NOTHING! ALL OR NOTHING! Either you understand it ALL, or you are
+NOTHING!
+
+OR BOTH!
+
+I. C. C. C. M.
+
+Inter-
+Client
+Communications
+Conventions
+Manual!
+
+Manual, like in "manual labour", like in "pain"
+Conventions, like in "not required, just do ALL OF IT or you SUCK!"
+Communications, like in "fucking overengineered carrier pigeons"
+Client, like in "see that guy with the limp, he was one of my ``clients''"
+Inter-, like in "Inter-nal bleeding"
+
+A million monkeys hacking at a million protocol hammers couldn't come up 
+with this shit in a million years, that's because it's EVIL, E-V-I-L,
+it's irrational, it's discontinuous, it is a truth within our codebase that
+cannot be derived from the axioms, it's OUT THERE, it was given to us to
+degrade us and as a warning to our children. We may have been stupid enough
+to work with the ICCCM but what of humanity? the humanity! oh! <sob>
+
+K.
