@@ -1,0 +1,59 @@
+xsel 1.2.0 Release
+------------------
+
+XSel is a command-line program for getting and setting the contents of the X
+selection. Normally this is only accessible by manually highlighting
+information and pasting it with the middle mouse button.
+
+This release is available as a source tarball at:
+
+  http://www.vergenet.net/~conrad/software/xsel/download/xsel-1.2.0.tar.gz
+
+New in this release
+-------------------
+
+This is a maintenance release, improving argument handling, documentation
+and X11 library detection.
+
+Details:
+
+ * Added handling of combined single-letter arguments, so "xsel -ao" is
+   equivalent to "xsel -a -o". Patch by Christopher Wellons.
+
+ * Corrected man page section numbers, updated URLs in source comments,
+   added ICCCM rant to source repository.
+
+ * Removed hardcoded X11 libraries in Makefile.am, and use only those
+   discovered by autoconf. Reported by Yair K.
+
+About XSel
+----------
+
+XSel's most common use is to set or get the X selection:
+
+	* To read a file into the X selection: xsel < file 
+	* To write the X selection to a file:  xsel > file 
+
+You can use xsel in shell scripts and desktop keybindings, so that the
+contents of the X selection are available to command arguments:
+
+	    mozilla --remote "openurl(`xsel`)"
+
+XSel can also be used for some more complicated tasks:
+
+	* To append to the X selection:        xsel --append < file 
+	* To follow a growing file:            xsel --follow < file 
+
+You can even tell applications to delete their selected text:
+
+	* To delete the contents of the selection: xsel --delete 
+
+Other options include various ways of manipulating the secondary and
+clipboard selections, and of making the selection contents persist in
+memory. For full details see:
+
+    http://www.vergenet.net/~conrad/software/xsel/
+
+enjoy :-)
+
+Conrad Parker.

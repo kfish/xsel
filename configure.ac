@@ -1,6 +1,6 @@
 # Process this file with autoconf to produce a configure script.
 AC_INIT([xsel.c])
-AM_INIT_AUTOMAKE(xsel, 1.1.0)
+AM_INIT_AUTOMAKE(xsel, 1.2.0)
 AC_CONFIG_SRCDIR([xsel.c])
 AM_CONFIG_HEADER(config.h)
 
