@@ -249,9 +249,9 @@ get_atom_name (Atom atom)
  */
 static void
 debug_property (int level, Window requestor, Atom property, Atom target,
-                int length)
+                unsigned long length)
 {
-  print_debug (level, "Got window property: requestor 0x%x, property 0x%x, target 0x%x %s, length %d bytes", requestor, property, target, get_atom_name (target), length);
+  print_debug (level, "Got window property: requestor 0x%x, property 0x%x, target 0x%x %s, length %ld bytes", requestor, property, target, get_atom_name (target), length);
 }
 
 /*
@@ -277,7 +277,18 @@ xs_malloc (size_t size)
  *
  * strdup wrapper for unsigned char *
  */
-#define xs_strdup(s) ((unsigned char *) strdup ((const char *)s))
+#define xs_strdup(s) ((unsigned char *) _xs_strdup ((const char *)s))
+static char * _xs_strdup (const char * s)
+{
+  char * ret;
+
+  if (s == NULL) return NULL;
+  if ((ret = strdup(s)) == NULL) {
+    exit_err ("strdup error");
+  }
+
+  return ret; 
+}
 
 /*
  * xs_strlen (s)
@@ -291,7 +302,16 @@ xs_malloc (size_t size)
  *
  * strncpy wrapper for unsigned char *
  */
-#define xs_strncpy(dest,src,n) (strncpy ((char *)dest, (const char *)src, n))
+#define xs_strncpy(dest,s,n) (_xs_strncpy ((char *)dest, (const char *)s, n))
+static char *
+_xs_strncpy (char * dest, const char * src, size_t n)
+{
+  if (n > 0) {
+    strncpy (dest, src, n);
+    dest[n-1] = '\0';
+  }
+  return dest;
+}
 
 /*
  * get_homedir ()
@@ -328,7 +348,7 @@ gotpw:
     exit_err ("error retrieving passwd entry");
   }
 
-  homedir = strdup (pw->pw_dir);
+  homedir = _xs_strdup (pw->pw_dir);
 
   return homedir;
 }
@@ -463,7 +483,7 @@ get_timestamp (void)
  */
 
 /* The jmp_buf to longjmp out of the signal handler */
-static jmp_buf env_alrm;
+static sigjmp_buf env_alrm;
 
 /*
  * alarm_handler (sig)
@@ -489,7 +509,7 @@ alarm_handler (int sig)
  */
 static Bool
 get_append_property (XSelectionEvent * xsl, unsigned char ** buffer,
-                     int * offset, int * alloc)
+                     unsigned long * offset, unsigned long * alloc)
 {
   unsigned char * ptr;
   Atom target;
@@ -514,7 +534,7 @@ get_append_property (XSelectionEvent * xsl, unsigned char ** buffer,
     print_debug (D_TRACE, "Got zero length property; end of INCR transfer");
     return False;
   } else if (format == 8) {
-    if ((unsigned long)*offset + length > (unsigned long)*alloc) {
+    if (*offset + length > *alloc) {
       *alloc = *offset + length;
       if ((*buffer = realloc (*buffer, *alloc)) == NULL) {
         exit_err ("realloc error");
@@ -543,7 +563,7 @@ wait_incr_selection (Atom selection, XSelectionEvent * xsl, int init_alloc)
 {
   XEvent event;
   unsigned char * incr_base = NULL, * incr_ptr = NULL;
-  int incr_alloc = 0, incr_xfer = 0;
+  unsigned long incr_alloc = 0, incr_xfer = 0;
   Bool wait_prop = True;
 
   print_debug (D_TRACE, "Initialising incremental retrieval of at least %d bytes\n", init_alloc);
@@ -1368,7 +1388,7 @@ static HandleResult
 process_multiple (MultTrack * mt, Bool do_parent)
 {
   HandleResult retval = HANDLE_OK;
-  int i;
+  unsigned long i;
 
   if (!mt) return retval;
 
@@ -1864,7 +1884,7 @@ expand_argv(int * argc, char **argv[])
       }
     } else {
       /* Simply copy the argument pointer to new_argv */
-      new_argv[new_i++] = strdup ((*argv)[i]);
+      new_argv[new_i++] = _xs_strdup ((*argv)[i]);
     }
   }
 
@@ -1981,7 +2001,7 @@ main(int argc, char *argv[])
       dont_output = True;
     } else if (OPT("--logfile") || OPT("-l")) {
       i++; if (i >= argc) goto usage_err;
-      strncpy (logfile, argv[i], MAXFNAME);
+      _xs_strncpy (logfile, argv[i], MAXFNAME);
     } else {
       goto usage_err;
     }
