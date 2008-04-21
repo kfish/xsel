@@ -29,9 +29,7 @@
 #include <sys/time.h>
 #include <setjmp.h>
 #include <signal.h>
-#include <X11/StringDefs.h>
 #include <X11/Xlib.h>
-#include <X11/Intrinsic.h>
 #include <X11/Xatom.h>
 
 #include "xsel.h"
@@ -73,10 +71,10 @@ static int NUM_TARGETS;
 static Atom supported_targets[MAX_NUM_TARGETS];
 
 /* do_follow: Follow mode for output */
-static Boolean do_follow = False;
+static Bool do_follow = False;
 
 /* nodaemon: Disable daemon mode if True. */
-static Boolean no_daemon = False;
+static Bool no_daemon = False;
 
 /* logfile: name of file to log error messages to when detached */
 static char logfile[MAXFNAME];
@@ -489,7 +487,7 @@ alarm_handler (int sig)
  *
  * If an error is encountered, the buffer is free'd.
  */
-static Boolean
+static Bool
 get_append_property (XSelectionEvent * xsl, unsigned char ** buffer,
                      int * offset, int * alloc)
 {
@@ -546,7 +544,7 @@ wait_incr_selection (Atom selection, XSelectionEvent * xsl, int init_alloc)
   XEvent event;
   unsigned char * incr_base = NULL, * incr_ptr = NULL;
   int incr_alloc = 0, incr_xfer = 0;
-  Boolean wait_prop = True;
+  Bool wait_prop = True;
 
   print_debug (D_TRACE, "Initialising incremental retrieval of at least %d bytes\n", init_alloc);
 
@@ -600,7 +598,7 @@ wait_selection (Atom selection, Atom request_target)
   int format;
   unsigned long bytesafter, length;
   unsigned char * value, * retval = NULL;
-  Boolean keep_waiting = True;
+  Bool keep_waiting = True;
 
   while (keep_waiting) {
     XNextEvent (display, &event);
@@ -776,7 +774,7 @@ copy_sel (unsigned char * s)
  * is available for reading, and return immediately if not.
  */
 static unsigned char *
-read_input (unsigned char * read_buffer, Boolean do_select)
+read_input (unsigned char * read_buffer, Bool do_select)
 {
   int insize = in_statbuf.st_blksize;
   unsigned char * new_buffer = NULL;
@@ -916,7 +914,7 @@ clear_selection (Atom selection)
  * Requests ownership of the X selection. Returns True if ownership was
  * granted, and False otherwise.
  */
-static Boolean
+static Bool
 own_selection (Atom selection)
 {
   Window owner;
@@ -1026,7 +1024,7 @@ handle_multiple (Display * display, Window requestor, Atom property,
 
 /* Forward declaration of process_multiple() */
 static HandleResult
-process_multiple (MultTrack * mt, Boolean do_parent);
+process_multiple (MultTrack * mt, Bool do_parent);
 
 /*
  * confirm_incr (it)
@@ -1138,7 +1136,7 @@ notify_multiple (MultTrack * mt, HandleResult hr)
  * of its completion with status 'hr'.
  */
 static void
-complete_multiple (MultTrack * mt, Boolean do_parent, HandleResult hr)
+complete_multiple (MultTrack * mt, Bool do_parent, HandleResult hr)
 {
   MultTrack * mparent = mt->mparent;
 
@@ -1367,7 +1365,7 @@ handle_delete (Display * display, Window requestor, Atom property)
  * is iteratively called on mt->mparent.
  */
 static HandleResult
-process_multiple (MultTrack * mt, Boolean do_parent)
+process_multiple (MultTrack * mt, Bool do_parent)
 {
   HandleResult retval = HANDLE_OK;
   int i;
@@ -1506,13 +1504,13 @@ handle_multiple (Display * display, Window requestor, Atom property,
  * the calling function to delete the corresponding selection.
  * Returns True otherwise.
  */
-static Boolean
+static Bool
 handle_selection_request (XEvent event, unsigned char * sel)
 {
   XSelectionRequestEvent * xsr = &event.xselectionrequest;
   XSelectionEvent ev;
   HandleResult hr = HANDLE_OK;
-  Boolean retval = True;
+  Bool retval = True;
 
   print_debug (D_TRACE, "handle_selection_request, property=0x%x (%s), target=0x%x (%s)",
                xsr->property, get_atom_name (xsr->property),
@@ -1899,13 +1897,13 @@ expand_argv(int * argc, char **argv[])
 int
 main(int argc, char *argv[])
 {
-  Boolean show_version = False;
-  Boolean show_help = False;
-  Boolean do_append = False, do_clear = False;
-  Boolean do_keep = False, do_exchange = False;
-  Boolean do_input = False, do_output = False;
-  Boolean dont_input = True, dont_output = False;
-  Boolean want_clipboard = False, do_delete = False;
+  Bool show_version = False;
+  Bool show_help = False;
+  Bool do_append = False, do_clear = False;
+  Bool do_keep = False, do_exchange = False;
+  Bool do_input = False, do_output = False;
+  Bool dont_input = True, dont_output = False;
+  Bool want_clipboard = False, do_delete = False;
   Window root;
   Atom selection = XA_PRIMARY, test_atom;
   int black;
