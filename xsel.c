@@ -265,6 +265,7 @@ xs_malloc (size_t size)
 {
   void * ret;
 
+  if (size == 0) size = 1;
   if ((ret = malloc (size)) == NULL) {
     exit_err ("malloc error");
   }
