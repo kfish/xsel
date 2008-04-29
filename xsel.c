@@ -1978,6 +1978,7 @@ main(int argc, char *argv[])
       debug_level++;
     } else if (OPT("--append") || OPT("-a")) {
       do_append = True;
+      do_input = True;
       dont_output = True;
     } else if (OPT("--input") || OPT("-i")) {
       do_input = True;
@@ -1990,6 +1991,7 @@ main(int argc, char *argv[])
       dont_input = True;
     } else if (OPT("--follow") || OPT("-f")) {
       do_follow = True;
+      do_input = True;
       dont_output = True;
     } else if (OPT("--primary") || OPT("-p")) {
       selection = XA_PRIMARY;
