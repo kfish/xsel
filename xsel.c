@@ -225,6 +225,9 @@ print_err (const char * fmt, ...)
 static char *
 get_atom_name (Atom atom)
 {
+  char * ret;
+  static char atom_name[MAXLINE+1];
+
   if (atom == None) return "None";
   if (atom == XA_STRING) return "STRING";
   if (atom == XA_PRIMARY) return "PRIMARY";
@@ -236,10 +239,20 @@ get_atom_name (Atom atom)
   if (atom == incr_atom) return "INCR";
   if (atom == null_atom) return "NULL";
   if (atom == text_atom) return "TEXT";
-  if (utf8_atom!=XA_STRING && atom == utf8_atom) return "UTF8_STRING";
-  if (atom == XInternAtom (display, "XSEL_DATA", True)) return "XSEL_DATA";
+  if (atom == utf8_atom) return "UTF8_STRING";
 
-  return "<unknown atom>";
+  ret = XGetAtomName (display, atom);
+  strncpy (atom_name, ret, sizeof (atom_name));
+  if (atom_name[MAXLINE] != '\0')
+    {
+      atom_name[MAXLINE-3] = '.';
+      atom_name[MAXLINE-2] = '.';
+      atom_name[MAXLINE-1] = '.';
+      atom_name[MAXLINE] = '\0';
+    }
+  XFree (ret);
+
+  return atom_name;
 }
 
 /*
