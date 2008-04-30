@@ -2158,7 +2158,16 @@ main(int argc, char *argv[])
   if (do_output || !dont_output) {
     /* Get the current selection */
     old_sel = get_selection_text (selection);
-    if (old_sel) printf ("%s", old_sel);
+    if (old_sel)
+      {
+         printf ("%s", old_sel);
+         if (!do_append && *old_sel != '\0' && isatty(1) &&
+             old_sel[xs_strlen (old_sel) - 1] != '\n')
+           {
+             fflush (stdout);
+             fprintf (stderr, "\n\\ No newline at end of selection\n");
+           }
+      }
   }
 
   /* handle input and clear modes */
@@ -2168,6 +2177,7 @@ main(int argc, char *argv[])
     clear_selection (selection);
   }
   else if (do_input || !dont_input) {
+    if ((do_output || !dont_output) && isatty(1)) fflush (stdout);
     if (do_append) {
       if (!old_sel) old_sel = get_selection_text (selection);
       new_sel = copy_sel (old_sel);
