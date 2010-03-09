@@ -18,7 +18,10 @@ AC_SUBST(X_LDFLAGS)
 AC_SUBST(X_LIBS)
 AC_SUBST(X_EXTRA_LIBS)
 
-AC_CHECK_LIB([X11], [XOpenDisplay])
+AC_CHECK_LIB([X11], [XOpenDisplay], HAVE_X11="yes", HAVE_X11="no")
+if test "x$HAVE_X11" = "xno" ; then
+  AC_MSG_ERROR([libX11 is required])
+fi
 
 # Error out on compile warnings
 dnl Add some useful warnings if we have gcc.
