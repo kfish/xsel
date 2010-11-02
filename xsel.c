@@ -70,6 +70,10 @@ static Atom compound_text_atom; /* The COMPOUND_TEXT atom */
 static int NUM_TARGETS;
 static Atom supported_targets[MAX_NUM_TARGETS];
 
+/* do_zeroflush: Use only last zero-separated part of input.
+ * All previous parts are discarded */
+static Bool do_zeroflush = False;
+
 /* do_follow: Follow mode for output */
 static Bool do_follow = False;
 
@@ -112,6 +116,7 @@ usage (void)
   printf ("Input options\n");
   printf ("  -a, --append          Append standard input to the selection\n");
   printf ("  -f, --follow          Append to selection as standard input grows\n");
+  printf ("  -z, --zeroflush       Overwrites selection when zero ('\\0') is received\n");
   printf ("  -i, --input           Read standard input into the selection\n\n");
   printf ("Output options\n");
   printf ("  -o, --output          Write the selection to standard output\n\n");
@@ -867,6 +872,19 @@ try_read:
   } while (n != 0 && !fatal);
 
   read_buffer[total_input] = '\0';
+
+  if(do_zeroflush && total_input > 0) {
+    int i;
+    for(i=total_input-1; i>=0; i--) {
+      if(read_buffer[i] == '\0') {
+        print_debug (D_TRACE, "Flushing input at %d", i);
+        memmove(&read_buffer[0], &read_buffer[i+1], total_input - i);
+        total_input = total_input - i - 1;
+        read_buffer[total_input] = '\0';
+        break;
+      }
+    }
+  }
 
   print_debug (D_TRACE, "Accumulated %d bytes input", total_input);
 
@@ -1994,6 +2012,11 @@ main(int argc, char *argv[])
       do_follow = True;
       do_input = True;
       dont_output = True;
+    } else if (OPT("--zeroflush") || OPT("-z")) {
+      do_follow = True;
+      do_input = True;
+      dont_output = True;
+      do_zeroflush = True;
     } else if (OPT("--primary") || OPT("-p")) {
       selection = XA_PRIMARY;
     } else if (OPT("--secondary") || OPT("-s")) {
