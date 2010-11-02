@@ -817,26 +817,27 @@ read_input (unsigned char * read_buffer, Bool do_select)
   fd_set fds;
   struct timeval select_timeout;
 
-  if (do_select) {
-try_read:
-    /* Check if data is available for reading -- if not, return immediately */
-    FD_ZERO (&fds);
-    FD_SET (0, &fds);
-
-    select_timeout.tv_sec = (time_t)0;
-    select_timeout.tv_usec = (time_t)0;
-
-    nfd = select (1, &fds, NULL, NULL, &select_timeout);
-    if (nfd == -1) {
-      if (errno == EINTR) goto try_read;
-      else exit_err ("select error");
-    } else if (nfd == 0) {
-      print_debug (D_TRACE, "No data available for reading");
-      return read_buffer;
-    }
-  }
-
   do {
+
+    if (do_select) {
+try_read:
+      /* Check if data is available for reading -- if not, return immediately */
+      FD_ZERO (&fds);
+      FD_SET (0, &fds);
+
+      select_timeout.tv_sec = (time_t)0;
+      select_timeout.tv_usec = (time_t)0;
+
+      nfd = select (1, &fds, NULL, NULL, &select_timeout);
+      if (nfd == -1) {
+        if (errno == EINTR) goto try_read;
+        else exit_err ("select error");
+      } else if (nfd == 0) {
+        print_debug (D_TRACE, "No data available for reading");
+        break;
+      }
+    }
+
     /* check if buffer is full */
     if (current_alloc == total_input) {
       if ((d = (current_alloc % insize)) != 0) current_alloc += (insize-d);
@@ -1696,7 +1697,7 @@ set_selection (Atom selection, unsigned char * sel)
 static void
 set_selection__daemon (Atom selection, unsigned char * sel)
 {
-  if (empty_string (sel)) {
+  if (empty_string (sel) && !do_follow) {
     clear_selection (selection);
     return;
   }
@@ -2183,7 +2184,8 @@ main(int argc, char *argv[])
       new_sel = copy_sel (old_sel);
     }
     new_sel = initialise_read (new_sel);
-    new_sel = read_input (new_sel, False);
+    if(!do_follow)
+      new_sel = read_input (new_sel, False);
     set_selection__daemon (selection, new_sel);
   }
   
