@@ -3,3 +3,6 @@ Conrad Parker <conrad@vergenet.net>
 
 Sergey Kogan <kogan@sklad.bacon.ru>
 	- UTF-8 support
+
+Sergey Mironov <ierton@gmail.com>
+        - Zeroflush support, follow bugfix
