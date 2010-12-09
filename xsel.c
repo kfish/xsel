@@ -1955,7 +1955,7 @@ main(int argc, char *argv[])
   Bool do_append = False, do_clear = False;
   Bool do_keep = False, do_exchange = False;
   Bool do_input = False, do_output = False;
-  Bool dont_input = True, dont_output = False;
+  Bool force_input = False, force_output = False;
   Bool want_clipboard = False, do_delete = False;
   Window root;
   Atom selection = XA_PRIMARY, test_atom;
@@ -1969,18 +1969,22 @@ main(int argc, char *argv[])
 
   /* Specify default behaviour based on input and output file types */
   if (isatty(0) && isatty(1)) {
-    /* Interactive mode: both stdin and stdout are ttys */
-    do_input = False; dont_input = True;
-    do_output = False; dont_output = False;
-  } else if (!isatty(0) && !isatty(1)) {
-    /* Scripted: both stdin and stdout are NOT ttys */
-    do_input = False; dont_input = True;
-    do_output = True; dont_output = False;
+    /* Solo invocation; display the selection and exit */
+    do_input = False; do_output = True;
   } else {
-    /* Interactive, pipelined: one of stdin or stdout is a tty */
-    do_input = !isatty(0); dont_input = !do_input;
-    do_output = !isatty(1); dont_output = !do_output;
+    /* Use only what is not attached to the tty */
+    /* Gives expected behaviour with *basic* usage of "xsel < foo", "xsel > foo", etc. */
+    do_input = !isatty(0); do_output = !isatty(1);
   }
+  /* NOTE:
+   * Checking stdin/stdout for being a tty is NOT reliable to tell what the user wants.
+   * This is because child processes inherit the file descriptors of their parents;
+   * an xsel called in a script that is e.g. daemonized (not attached to a tty), or called
+   * with a redirection or in a pipeline will have non-tty file descriptors on default.
+   * The redirection/piping issue also applies to "grouped" or "compound" commands
+   * in the shell (functions, subshells, curly-brace blocks, conditionals, loops, etc.).
+   * In all these cases, the user *must* set the mode of operation explicitly.
+   */
 
 #define OPT(s) (strcmp (argv[i], (s)) == 0)
 
@@ -1996,26 +2000,26 @@ main(int argc, char *argv[])
     } else if (OPT("--verbose") || OPT("-v")) {
       debug_level++;
     } else if (OPT("--append") || OPT("-a")) {
+      force_input = True;
+      do_output = False;
       do_append = True;
-      do_input = True;
-      dont_output = True;
     } else if (OPT("--input") || OPT("-i")) {
-      do_input = True;
-      dont_output = True;
+      force_input = True;
+      do_output = False;
     } else if (OPT("--clear") || OPT("-c")) {
+      do_output = False;
       do_clear = True;
-      dont_output = True;
     } else if (OPT("--output") || OPT("-o")) {
-      do_output = True;
-      dont_input = True;
+      do_input = False;
+      force_output = True;
     } else if (OPT("--follow") || OPT("-f")) {
+      force_input = True;
+      do_output = False;
       do_follow = True;
-      do_input = True;
-      dont_output = True;
     } else if (OPT("--zeroflush") || OPT("-z")) {
+      force_input = True;
+      do_output = False;
       do_follow = True;
-      do_input = True;
-      dont_output = True;
       do_zeroflush = True;
     } else if (OPT("--primary") || OPT("-p")) {
       selection = XA_PRIMARY;
@@ -2037,8 +2041,8 @@ main(int argc, char *argv[])
     } else if (OPT("--nodetach") || OPT("-n")) {
       no_daemon = True;
     } else if (OPT("--delete") || OPT("-d")) {
+      do_output = False;
       do_delete = True;
-      dont_output = True;
     } else if (OPT("--logfile") || OPT("-l")) {
       i++; if (i >= argc) goto usage_err;
       _xs_strncpy (logfile, argv[i], MAXFNAME);
@@ -2179,7 +2183,7 @@ main(int argc, char *argv[])
   }
 
   /* handle output modes */
-  if (do_output || !dont_output) {
+  if (do_output || force_output) {
     /* Get the current selection */
     old_sel = get_selection_text (selection);
     if (old_sel)
@@ -2200,8 +2204,8 @@ main(int argc, char *argv[])
   } else if (do_clear) {
     clear_selection (selection);
   }
-  else if (do_input || !dont_input) {
-    if ((do_output || !dont_output) && isatty(1)) fflush (stdout);
+  else if (do_input || force_input) {
+    if (do_output || force_output) fflush (stdout);
     if (do_append) {
       if (!old_sel) old_sel = get_selection_text (selection);
       new_sel = copy_sel (old_sel);
