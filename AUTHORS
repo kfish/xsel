@@ -6,3 +6,6 @@ Sergey Kogan <kogan@sklad.bacon.ru>
 
 Sergey Mironov <ierton@gmail.com>
         - Zeroflush support, follow bugfix
+
+Taylan Ulrich B.<taylanbayirli@gmail.com>
+        - input/output non-tty logic fix
