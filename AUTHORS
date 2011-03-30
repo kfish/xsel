@@ -9,3 +9,6 @@ Sergey Mironov <ierton@gmail.com>
 
 Taylan Ulrich B.<taylanbayirli@gmail.com>
         - input/output non-tty logic fix
+
+Hans de Groede
+        - fix overflow of supported_targets array
