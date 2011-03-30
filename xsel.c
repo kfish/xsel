@@ -66,7 +66,7 @@ static Atom compound_text_atom; /* The COMPOUND_TEXT atom */
  * NB. We do not currently serve COMPOUND_TEXT; we can retrieve it but do not
  * perform charset conversion.
  */
-#define MAX_NUM_TARGETS 8
+#define MAX_NUM_TARGETS 9
 static int NUM_TARGETS;
 static Atom supported_targets[MAX_NUM_TARGETS];
 
@@ -2158,6 +2158,11 @@ main(int argc, char *argv[])
 
   supported_targets[s++] = XA_STRING;
   NUM_TARGETS++;
+
+  if (NUM_TARGETS > MAX_NUM_TARGETS) {
+    exit_err ("internal error num-targets (%d) > max-num-targets (%d)\n",
+              NUM_TARGETS, MAX_NUM_TARGETS);
+  }
 
   /* Get the COMPOUND_TEXT atom.
    * NB. We do not currently serve COMPOUND_TEXT; we can retrieve it but
