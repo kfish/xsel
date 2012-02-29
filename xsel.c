@@ -542,8 +542,8 @@ get_append_property (XSelectionEvent * xsl, unsigned char ** buffer,
 
   debug_property (D_TRACE, xsl->requestor, xsl->property, target, length);
 
-  if (target != XA_STRING) {
-    print_debug (D_OBSC, "target %s not XA_STRING in get_append_property()",
+  if (target != XA_STRING && target != utf8_atom) {
+    print_debug (D_OBSC, "target %s not XA_STRING nor UTF8_STRING in get_append_property()",
                  get_atom_name (target));
     free (*buffer);
     *buffer = NULL;
