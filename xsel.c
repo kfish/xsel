@@ -1330,7 +1330,7 @@ change_property (Display * display, Window requestor, Atom property,
   it->chunk = MIN (it->max_elements, it->nelements - it->offset);
 
   /* Wait for that property to get deleted */
-  print_debug (D_TRACE, "Waiting on intial property deletion (%s)",
+  print_debug (D_TRACE, "Waiting on initial property deletion (%s)",
                get_atom_name (it->property));
 
   return HANDLE_INCOMPLETE;
