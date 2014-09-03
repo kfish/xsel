@@ -92,6 +92,8 @@ static int current_alloc = 0;
 static long timeout = 0;
 static struct itimerval timer;
 
+#define USEC_PER_SEC 1000000
+
 static int saved_argc;
 static char ** saved_argv;
 
@@ -373,6 +375,20 @@ gotpw:
 }
 
 /*
+ * set_timer_timeout ()
+ *
+ * Set timer parameters according to specified timeout.
+ */
+static void
+set_timer_timeout (void)
+{
+  timer.it_interval.tv_sec = timeout / USEC_PER_SEC;
+  timer.it_interval.tv_usec = timeout % USEC_PER_SEC;
+  timer.it_value.tv_sec = timeout / USEC_PER_SEC;
+  timer.it_value.tv_usec = timeout % USEC_PER_SEC;
+}
+
+/*
  * become_daemon ()
  *
  * Perform the required procedure to become a daemon process, as
@@ -496,7 +512,7 @@ get_timestamp (void)
  *
  * The selection retrieval can time out if no response is received within
  * a user-specified time limit. In order to ensure we time the entire
- * selection retrieval, we use an interval timer and catch SIGVTALRM.
+ * selection retrieval, we use an interval timer and catch SIGALRM.
  * [Calling select() on the XConnectionNumber would only provide a timeout
  * to the first XEvent.]
  */
@@ -507,7 +523,7 @@ static sigjmp_buf env_alrm;
 /*
  * alarm_handler (sig)
  *
- * Signal handler for catching SIGVTALRM.
+ * Signal handler for catching SIGALRM.
  */
 static void
 alarm_handler (int sig)
@@ -698,7 +714,7 @@ wait_selection (Atom selection, Atom request_target)
   /* Now that we've received the SelectionNotify event, clear any
    * remaining timeout. */
   if (timeout > 0) {
-    setitimer (ITIMER_VIRTUAL, (struct itimerval *)0, (struct itimerval *)0);
+    setitimer (ITIMER_REAL, (struct itimerval *)0, (struct itimerval *)0);
   }
 
   return retval;
@@ -725,17 +741,14 @@ get_selection (Atom selection, Atom request_target)
   XSync (display, False);
 
   if (timeout > 0) {
-    if (signal (SIGVTALRM, alarm_handler) == SIG_ERR) {
+    if (signal (SIGALRM, alarm_handler) == SIG_ERR) {
       exit_err ("error setting timeout handler");
     }
 
-    timer.it_interval.tv_sec = 0;
-    timer.it_interval.tv_usec = timeout;
-    timer.it_value.tv_sec = 0;
-    timer.it_value.tv_usec = timeout;
+    set_timer_timeout ();
 
     if (sigsetjmp (env_alrm, 0) == 0) {
-      setitimer (ITIMER_VIRTUAL, &timer, (struct itimerval *)0);
+      setitimer (ITIMER_REAL, &timer, (struct itimerval *)0);
       retval = wait_selection (selection, request_target);
     } else {
       print_debug (D_WARN, "selection timed out");
