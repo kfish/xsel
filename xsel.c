@@ -374,6 +374,20 @@ gotpw:
   return homedir;
 }
 
+/* The jmp_buf to longjmp out of the signal handler */
+static sigjmp_buf env_alrm;
+
+/*
+ * alarm_handler (sig)
+ *
+ * Signal handler for catching SIGALRM.
+ */
+static void
+alarm_handler (int sig)
+{
+  siglongjmp (env_alrm, 1);
+}
+
 /*
  * set_timer_timeout ()
  *
@@ -387,6 +401,30 @@ set_timer_timeout (void)
   timer.it_value.tv_sec = timeout / USEC_PER_SEC;
   timer.it_value.tv_usec = timeout % USEC_PER_SEC;
 }
+
+/*
+ * set_daemon_timeout ()
+ *
+ * Set up a timer to cause the daemon to exit after the desired
+ * amount of time.
+ */
+static void
+set_daemon_timeout (void)
+{
+  if (signal (SIGALRM, alarm_handler) == SIG_ERR) {
+    exit_err ("error setting timeout handler");
+  }
+
+  set_timer_timeout ();
+
+  if (sigsetjmp (env_alrm, 0) == 0) {
+    setitimer (ITIMER_REAL, &timer, (struct itimerval *)0);
+  } else {
+    print_debug (D_INFO, "daemon exiting after %d ms", timeout / 1000);
+    exit (0);
+  }
+}
+
 
 /*
  * become_daemon ()
@@ -403,7 +441,12 @@ become_daemon (void)
   int null_r_fd, null_w_fd, log_fd;
   char * homedir;
 
-  if (no_daemon) return;
+  if (no_daemon) {
+	  /* If the user has specified a timeout, enforce it even if we don't
+	   * actually daemonize */
+	  set_daemon_timeout ();
+	  return;
+  }
 
   homedir = get_homedir ();
 
@@ -471,6 +514,8 @@ become_daemon (void)
   if (dup2 (log_fd, 2) == -1) {
     exit_err ("error duplicating logfile %s on stderr", logfile);
   }
+
+  set_daemon_timeout ();
 }
 
 /*
@@ -516,20 +561,6 @@ get_timestamp (void)
  * [Calling select() on the XConnectionNumber would only provide a timeout
  * to the first XEvent.]
  */
-
-/* The jmp_buf to longjmp out of the signal handler */
-static sigjmp_buf env_alrm;
-
-/*
- * alarm_handler (sig)
- *
- * Signal handler for catching SIGALRM.
- */
-static void
-alarm_handler (int sig)
-{
-  siglongjmp (env_alrm, 1);
-}
 
 /*
  * get_append_property ()
