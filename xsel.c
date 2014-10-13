@@ -2138,10 +2138,6 @@ main(int argc, char *argv[])
   supported_targets[s++] = incr_atom;
   NUM_TARGETS++;
 
-  /* Get the NULL atom */
-  null_atom = XInternAtom (display, "NULL", False);
-  NUM_TARGETS++;
-
   /* Get the TEXT atom */
   text_atom = XInternAtom (display, "TEXT", False);
   supported_targets[s++] = text_atom;
@@ -2163,6 +2159,9 @@ main(int argc, char *argv[])
     exit_err ("internal error num-targets (%d) > max-num-targets (%d)\n",
               NUM_TARGETS, MAX_NUM_TARGETS);
   }
+
+  /* Get the NULL atom */
+  null_atom = XInternAtom (display, "NULL", False);
 
   /* Get the COMPOUND_TEXT atom.
    * NB. We do not currently serve COMPOUND_TEXT; we can retrieve it but
