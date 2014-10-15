@@ -92,6 +92,8 @@ static int current_alloc = 0;
 static long timeout = 0;
 static struct itimerval timer;
 
+#define USEC_PER_SEC 1000000
+
 static int saved_argc;
 static char ** saved_argv;
 
@@ -373,6 +375,78 @@ gotpw:
 }
 
 /*
+ * The set of terminal signals we block while handling SelectionRequests.
+ *
+ * If we exit in the middle of handling a SelectionRequest, we might leave the
+ * requesting client hanging, so we try to be nice and finish handling
+ * requests before terminating.  Hence we block SIG{ALRM,INT,TERM} while
+ * handling requests and unblock them only while waiting in XNextEvent().
+ */
+static sigset_t exit_sigs;
+
+static void block_exit_sigs(void)
+{
+  sigprocmask (SIG_BLOCK, &exit_sigs, NULL);
+}
+
+static void unblock_exit_sigs(void)
+{
+  sigprocmask (SIG_UNBLOCK, &exit_sigs, NULL);
+}
+
+/* The jmp_buf to longjmp out of the signal handler */
+static sigjmp_buf env_alrm;
+
+/*
+ * alarm_handler (sig)
+ *
+ * Signal handler for catching SIGALRM.
+ */
+static void
+alarm_handler (int sig)
+{
+  siglongjmp (env_alrm, 1);
+}
+
+/*
+ * set_timer_timeout ()
+ *
+ * Set timer parameters according to specified timeout.
+ */
+static void
+set_timer_timeout (void)
+{
+  timer.it_interval.tv_sec = timeout / USEC_PER_SEC;
+  timer.it_interval.tv_usec = timeout % USEC_PER_SEC;
+  timer.it_value.tv_sec = timeout / USEC_PER_SEC;
+  timer.it_value.tv_usec = timeout % USEC_PER_SEC;
+}
+
+/*
+ * set_daemon_timeout ()
+ *
+ * Set up a timer to cause the daemon to exit after the desired
+ * amount of time.
+ */
+static void
+set_daemon_timeout (void)
+{
+  if (signal (SIGALRM, alarm_handler) == SIG_ERR) {
+    exit_err ("error setting timeout handler");
+  }
+
+  set_timer_timeout ();
+
+  if (sigsetjmp (env_alrm, 0) == 0) {
+    setitimer (ITIMER_REAL, &timer, (struct itimerval *)0);
+  } else {
+    print_debug (D_INFO, "daemon exiting after %d ms", timeout / 1000);
+    exit (0);
+  }
+}
+
+
+/*
  * become_daemon ()
  *
  * Perform the required procedure to become a daemon process, as
@@ -387,7 +461,12 @@ become_daemon (void)
   int null_r_fd, null_w_fd, log_fd;
   char * homedir;
 
-  if (no_daemon) return;
+  if (no_daemon) {
+	  /* If the user has specified a timeout, enforce it even if we don't
+	   * actually daemonize */
+	  set_daemon_timeout ();
+	  return;
+  }
 
   homedir = get_homedir ();
 
@@ -455,6 +534,8 @@ become_daemon (void)
   if (dup2 (log_fd, 2) == -1) {
     exit_err ("error duplicating logfile %s on stderr", logfile);
   }
+
+  set_daemon_timeout ();
 }
 
 /*
@@ -496,24 +577,10 @@ get_timestamp (void)
  *
  * The selection retrieval can time out if no response is received within
  * a user-specified time limit. In order to ensure we time the entire
- * selection retrieval, we use an interval timer and catch SIGVTALRM.
+ * selection retrieval, we use an interval timer and catch SIGALRM.
  * [Calling select() on the XConnectionNumber would only provide a timeout
  * to the first XEvent.]
  */
-
-/* The jmp_buf to longjmp out of the signal handler */
-static sigjmp_buf env_alrm;
-
-/*
- * alarm_handler (sig)
- *
- * Signal handler for catching SIGVTALRM.
- */
-static void
-alarm_handler (int sig)
-{
-  siglongjmp (env_alrm, 1);
-}
 
 /*
  * get_append_property ()
@@ -698,7 +765,7 @@ wait_selection (Atom selection, Atom request_target)
   /* Now that we've received the SelectionNotify event, clear any
    * remaining timeout. */
   if (timeout > 0) {
-    setitimer (ITIMER_VIRTUAL, (struct itimerval *)0, (struct itimerval *)0);
+    setitimer (ITIMER_REAL, (struct itimerval *)0, (struct itimerval *)0);
   }
 
   return retval;
@@ -725,17 +792,14 @@ get_selection (Atom selection, Atom request_target)
   XSync (display, False);
 
   if (timeout > 0) {
-    if (signal (SIGVTALRM, alarm_handler) == SIG_ERR) {
+    if (signal (SIGALRM, alarm_handler) == SIG_ERR) {
       exit_err ("error setting timeout handler");
     }
 
-    timer.it_interval.tv_sec = 0;
-    timer.it_interval.tv_usec = timeout;
-    timer.it_value.tv_sec = 0;
-    timer.it_value.tv_usec = timeout;
+    set_timer_timeout ();
 
     if (sigsetjmp (env_alrm, 0) == 0) {
-      setitimer (ITIMER_VIRTUAL, &timer, (struct itimerval *)0);
+      setitimer (ITIMER_REAL, &timer, (struct itimerval *)0);
       retval = wait_selection (selection, request_target);
     } else {
       print_debug (D_WARN, "selection timed out");
@@ -1669,12 +1733,16 @@ set_selection (Atom selection, unsigned char * sel)
 {
   XEvent event;
   IncrTrack * it;
-  
+
   if (own_selection (selection) == False) return;
 
   for (;;) {
+    /* Flush before unblocking signals so we send replies before exiting */
+    XFlush (display);
+    unblock_exit_sigs ();
     XNextEvent (display, &event);
-    
+    block_exit_sigs ();
+
     switch (event.type) {
     case SelectionClear:
       if (event.xselectionclear.selection == selection) return;
@@ -1755,8 +1823,12 @@ set_selection_pair (unsigned char * sel_p, unsigned char * sel_s)
   }
 
   for (;;) {
+    /* Flush before unblocking signals so we send replies before exiting */
+    XFlush (display);
+    unblock_exit_sigs ();
     XNextEvent (display, &event);
-    
+    block_exit_sigs ();
+
     switch (event.type) {
     case SelectionClear:
       if (event.xselectionclear.selection == XA_PRIMARY) {
@@ -2169,6 +2241,11 @@ main(int argc, char *argv[])
    * do not perform charset conversion.
    */
   compound_text_atom = XInternAtom (display, "COMPOUND_TEXT", False);
+
+  sigemptyset (&exit_sigs);
+  sigaddset (&exit_sigs, SIGALRM);
+  sigaddset (&exit_sigs, SIGINT);
+  sigaddset (&exit_sigs, SIGTERM);
 
   /* handle selection keeping and exit if so */
   if (do_keep) {
