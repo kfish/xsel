@@ -374,6 +374,26 @@ gotpw:
   return homedir;
 }
 
+/*
+ * The set of terminal signals we block while handling SelectionRequests.
+ *
+ * If we exit in the middle of handling a SelectionRequest, we might leave the
+ * requesting client hanging, so we try to be nice and finish handling
+ * requests before terminating.  Hence we block SIG{ALRM,INT,TERM} while
+ * handling requests and unblock them only while waiting in XNextEvent().
+ */
+static sigset_t exit_sigs;
+
+static void block_exit_sigs(void)
+{
+  sigprocmask (SIG_BLOCK, &exit_sigs, NULL);
+}
+
+static void unblock_exit_sigs(void)
+{
+  sigprocmask (SIG_UNBLOCK, &exit_sigs, NULL);
+}
+
 /* The jmp_buf to longjmp out of the signal handler */
 static sigjmp_buf env_alrm;
 
@@ -1713,12 +1733,16 @@ set_selection (Atom selection, unsigned char * sel)
 {
   XEvent event;
   IncrTrack * it;
-  
+
   if (own_selection (selection) == False) return;
 
   for (;;) {
+    /* Flush before unblocking signals so we send replies before exiting */
+    XFlush (display);
+    unblock_exit_sigs ();
     XNextEvent (display, &event);
-    
+    block_exit_sigs ();
+
     switch (event.type) {
     case SelectionClear:
       if (event.xselectionclear.selection == selection) return;
@@ -1799,8 +1823,12 @@ set_selection_pair (unsigned char * sel_p, unsigned char * sel_s)
   }
 
   for (;;) {
+    /* Flush before unblocking signals so we send replies before exiting */
+    XFlush (display);
+    unblock_exit_sigs ();
     XNextEvent (display, &event);
-    
+    block_exit_sigs ();
+
     switch (event.type) {
     case SelectionClear:
       if (event.xselectionclear.selection == XA_PRIMARY) {
@@ -2213,6 +2241,11 @@ main(int argc, char *argv[])
    * do not perform charset conversion.
    */
   compound_text_atom = XInternAtom (display, "COMPOUND_TEXT", False);
+
+  sigemptyset (&exit_sigs);
+  sigaddset (&exit_sigs, SIGALRM);
+  sigaddset (&exit_sigs, SIGINT);
+  sigaddset (&exit_sigs, SIGTERM);
 
   /* handle selection keeping and exit if so */
   if (do_keep) {
