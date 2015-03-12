@@ -60,13 +60,14 @@ static Atom null_atom; /* The NULL atom */
 static Atom text_atom; /* The TEXT atom */
 static Atom utf8_atom; /* The UTF8 atom */
 static Atom compound_text_atom; /* The COMPOUND_TEXT atom */
+static Atom vimenc_atom; /* The _VIMENC_TEXT atom */
 
 /* Number of selection targets served by this.
  * (MULTIPLE, INCR, TARGETS, TIMESTAMP, DELETE, TEXT, UTF8_STRING and STRING)
  * NB. We do not currently serve COMPOUND_TEXT; we can retrieve it but do not
  * perform charset conversion.
  */
-#define MAX_NUM_TARGETS 9
+#define MAX_NUM_TARGETS 10
 static int NUM_TARGETS;
 static Atom supported_targets[MAX_NUM_TARGETS];
 
@@ -76,6 +77,9 @@ static Bool do_zeroflush = False;
 
 /* do_follow: Follow mode for output */
 static Bool do_follow = False;
+
+/* do_vimenc: vim specific handling */
+static Bool do_vimenc = False;
 
 /* nodaemon: Disable daemon mode if True. */
 static Bool no_daemon = False;
@@ -88,6 +92,10 @@ static struct stat in_statbuf, out_statbuf;
 
 static int total_input = 0;
 static int current_alloc = 0;
+
+/* the data we should send to a vimenc request */
+static unsigned char* vimenc_sel;
+static int vimenc_len;
 
 static long timeout = 0;
 static struct itimerval timer;
@@ -697,14 +705,18 @@ wait_incr_selection (Atom selection, XSelectionEvent * xsl, int init_alloc)
  * XA_STRING) or deletion (delete_atom).
  */
 static unsigned char *
-wait_selection (Atom selection, Atom request_target)
+wait_selection (Atom selection, Atom request_target, size_t *length)
 {
   XEvent event;
   Atom target;
   int format;
-  unsigned long bytesafter, length;
+  unsigned long bytesafter, lenval;
   unsigned char * value, * retval = NULL;
   Bool keep_waiting = True;
+
+  if (length == NULL) {
+    length = &lenval;
+  }
 
   while (keep_waiting) {
     XNextEvent (display, &event);
@@ -724,10 +736,10 @@ wait_selection (Atom selection, Atom request_target)
 			    event.xselection.requestor,
 			    event.xselection.property, 0L, 1000000,
 			    False, (Atom)AnyPropertyType, &target,
-			    &format, &length, &bytesafter, &value);
+			    &format, length, &bytesafter, &value);
 
         debug_property (D_TRACE, event.xselection.requestor,
-                        event.xselection.property, target, length);
+                        event.xselection.property, target, *length);
 
         if (request_target == delete_atom && value == NULL) {
           keep_waiting = False;
@@ -737,7 +749,7 @@ wait_selection (Atom selection, Atom request_target)
                                         *(int *)value);
           keep_waiting = False;
         } else if (target != utf8_atom && target != XA_STRING &&
-                   target != compound_text_atom &&
+                   target != compound_text_atom && target != vimenc_atom &&
                    request_target != delete_atom) {
           /* Report non-TEXT atoms */
           print_debug (D_WARN, "Selection (type %s) is not a string.",
@@ -746,7 +758,9 @@ wait_selection (Atom selection, Atom request_target)
           retval = NULL;
           keep_waiting = False;
         } else {
-          retval = xs_strdup (value);
+          retval = xs_malloc ((*length)+1);
+          memcpy(retval, value, *length);
+          retval[*length] = 0;
           XFree (value);
           keep_waiting = False;
         }
@@ -781,7 +795,7 @@ wait_selection (Atom selection, Atom request_target)
  * expires before the selection has been retrieved.
  */
 static unsigned char *
-get_selection (Atom selection, Atom request_target)
+get_selection (Atom selection, Atom request_target, size_t* length)
 {
   Atom prop;
   unsigned char * retval;
@@ -800,13 +814,13 @@ get_selection (Atom selection, Atom request_target)
 
     if (sigsetjmp (env_alrm, 0) == 0) {
       setitimer (ITIMER_REAL, &timer, (struct itimerval *)0);
-      retval = wait_selection (selection, request_target);
+      retval = wait_selection (selection, request_target, length);
     } else {
       print_debug (D_WARN, "selection timed out");
       retval = NULL;
     }
   } else {
-    retval = wait_selection (selection, request_target);
+    retval = wait_selection (selection, request_target, length);
   }
 
   return retval;
@@ -826,12 +840,22 @@ get_selection (Atom selection, Atom request_target)
  * reliable.
  */
 static unsigned char *
-get_selection_text (Atom selection)
+get_selection_text (Atom selection, size_t *vimenc_len)
 {
   unsigned char * retval;
 
-  if ((retval = get_selection (selection, utf8_atom)) == NULL)
-    retval = get_selection (selection, XA_STRING);
+  if (do_vimenc) {
+      if ((retval = get_selection (selection, vimenc_atom, vimenc_len)) != NULL)
+          return retval;
+  }
+
+  if ((retval = get_selection (selection, utf8_atom, NULL)) == NULL)
+    retval = get_selection (selection, XA_STRING, NULL);
+
+  if (vimenc_len) {
+      // signal this is not a vim selection
+      *vimenc_len = 0;
+  }
 
   return retval;
 }
@@ -1442,6 +1466,22 @@ handle_string (Display * display, Window requestor, Atom property,
 }
 
 /*
+ * handle_vimenc (display, requestor, property, sel)
+ *
+ * Handle a vimenc request; setting 'vimenc_sel' as the data
+ */
+static HandleResult
+handle_vimenc (Display * display, Window requestor, Atom property,
+               unsigned char * sel, Atom selection, Time time,
+               MultTrack * mparent)
+{
+  return
+    change_property (display, requestor, property, vimenc_atom, 8,
+                     PropModeReplace, vimenc_sel, vimenc_len,
+                     selection, time, mparent);
+}
+
+/*
  * handle_utf8_string (display, requestor, property, sel)
  *
  * Handle a UTF8_STRING request; setting 'sel' as the data
@@ -1502,6 +1542,9 @@ process_multiple (MultTrack * mt, Bool do_parent)
                                  mt->sel, mt->selection, mt->time, mt);
     } else if (mt->atoms[i] == XA_STRING || mt->atoms[i] == text_atom) {
       retval |= handle_string (mt->display, mt->requestor, mt->atoms[i+1],
+                               mt->sel, mt->selection, mt->time, mt);
+    } else if (do_vimenc && mt->atoms[i] == vimenc_atom) {
+      retval |= handle_vimenc (mt->display, mt->requestor, mt->atoms[i+1],
                                mt->sel, mt->selection, mt->time, mt);
     } else if (mt->atoms[i] == utf8_atom) {
       retval |= handle_utf8_string (mt->display, mt->requestor, mt->atoms[i+1],
@@ -1683,6 +1726,11 @@ handle_selection_request (XEvent event, unsigned char * sel)
     ev.property = xsr->property;
     hr = handle_utf8_string (ev.display, ev.requestor, ev.property, sel,
                              ev.selection, ev.time, NULL);
+  } else if (do_vimenc && ev.target == vimenc_atom) {
+    /* Received vimenc request */
+    ev.property = xsr->property;
+    hr = handle_vimenc (ev.display, ev.requestor, ev.property, sel,
+                        ev.selection, ev.time, NULL);
   } else if (ev.target == delete_atom) {
     /* Received DELETE request */
     ev.property = xsr->property;
@@ -1781,11 +1829,29 @@ set_selection (Atom selection, unsigned char * sel)
  * created and the specified selection is cleared instead.
  */
 static void
-set_selection__daemon (Atom selection, unsigned char * sel)
+set_selection__daemon (Atom selection, unsigned char * sel, size_t sel_len)
 {
-  if (empty_string (sel) && !do_follow) {
+  if (empty_string (sel) && !do_follow && !do_vimenc) {
     clear_selection (selection);
     return;
+  }
+
+  if (do_vimenc) {
+    if (sel_len < 3) {
+      exit_err ("Invalid vimenc data");
+    } else {
+      unsigned char motion = sel[0];
+      unsigned char* enc = &sel[1];
+
+      size_t enclen = xs_strlen(enc);
+      // invalid format: no NUL after mation encoding
+      if (sel_len < 3 + enclen) {
+        exit_err ("Invalid vimenc data");
+      }
+      vimenc_sel = sel;
+      vimenc_len = total_input;
+      sel += 2 + enclen; // skip header for text formats
+    }
   }
 
   become_daemon ();
@@ -1903,8 +1969,8 @@ keep_selections (void)
 {
   unsigned char * text1, * text2;
 
-  text1 = get_selection_text (XA_PRIMARY);
-  text2 = get_selection_text (XA_SECONDARY);
+  text1 = get_selection_text (XA_PRIMARY, NULL);
+  text2 = get_selection_text (XA_SECONDARY, NULL);
 
   set_selection_pair__daemon (text1, text2);
 }
@@ -1921,8 +1987,8 @@ exchange_selections (void)
 {
   unsigned char * text1, * text2;
 
-  text1 = get_selection_text (XA_PRIMARY);
-  text2 = get_selection_text (XA_SECONDARY);
+  text1 = get_selection_text (XA_PRIMARY, NULL);
+  text2 = get_selection_text (XA_SECONDARY, NULL);
 
   set_selection_pair__daemon (text2, text1);
 }
@@ -2093,6 +2159,8 @@ main(int argc, char *argv[])
       do_output = False;
       do_follow = True;
       do_zeroflush = True;
+    } else if (OPT("--vimenc")) {
+      do_vimenc = True;
     } else if (OPT("--primary") || OPT("-p")) {
       selection = XA_PRIMARY;
     } else if (OPT("--secondary") || OPT("-s")) {
@@ -2121,6 +2189,10 @@ main(int argc, char *argv[])
     } else {
       goto usage_err;
     }
+  }
+
+  if (do_vimenc && (do_follow || do_zeroflush)) {
+      exit_err("--vimenc is not compatible with --follow or --zeroflush");
   }
 
   if (show_version) {
@@ -2215,6 +2287,13 @@ main(int argc, char *argv[])
   supported_targets[s++] = text_atom;
   NUM_TARGETS++;
 
+  /* Get the vimenc atom */
+  vimenc_atom = XInternAtom (display, "_VIMENC_TEXT", False);
+  if (do_vimenc) {
+    supported_targets[s++] = vimenc_atom;
+    NUM_TARGETS++;
+  }
+
   /* Get the UTF8_STRING atom */
   utf8_atom = XInternAtom (display, "UTF8_STRING", True);
   if(utf8_atom != None) {
@@ -2266,35 +2345,45 @@ main(int argc, char *argv[])
   /* handle output modes */
   if (do_output || force_output) {
     /* Get the current selection */
-    old_sel = get_selection_text (selection);
-    if (old_sel)
-      {
-         printf ("%s", old_sel);
-         if (!do_append && *old_sel != '\0' && isatty(1) &&
-             old_sel[xs_strlen (old_sel) - 1] != '\n')
-           {
-             fflush (stdout);
-             fprintf (stderr, "\n\\ No newline at end of selection\n");
-           }
+
+    size_t vimenc_len;
+    old_sel = get_selection_text (selection, &vimenc_len);
+    if (old_sel) {
+      if (do_vimenc) {
+        if (vimenc_len > 0) {
+          printf("v");
+          fwrite(old_sel, vimenc_len, sizeof(unsigned char), stdout);
+        } else {
+          printf("t%s", old_sel);
+        }
+      } else {
+        printf ("%s", old_sel);
+        if (!do_append && *old_sel != '\0' && isatty(1) &&
+            old_sel[xs_strlen (old_sel) - 1] != '\n')
+        {
+          fprintf (stderr, "\n\\ No newline at end of selection\n");
+        }
       }
+      fflush (stdout);
+    }
   }
 
   /* handle input and clear modes */
   if (do_delete) {
-    get_selection (selection, delete_atom);
+    get_selection (selection, delete_atom, NULL);
   } else if (do_clear) {
     clear_selection (selection);
   }
   else if (do_input || force_input) {
     if (do_output || force_output) fflush (stdout);
     if (do_append) {
-      if (!old_sel) old_sel = get_selection_text (selection);
+      if (!old_sel) old_sel = get_selection_text (selection, NULL);
       new_sel = copy_sel (old_sel);
     }
     new_sel = initialise_read (new_sel);
     if(!do_follow)
       new_sel = read_input (new_sel, False);
-    set_selection__daemon (selection, new_sel);
+    set_selection__daemon (selection, new_sel, total_input);
   }
   
   exit (0);
