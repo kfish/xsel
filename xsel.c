@@ -335,9 +335,9 @@ _xs_strncpy (char * dest, const char * src, size_t n)
 }
 
 /*
- * get_homedir ()
+ * get_xdg_cache_home ()
  *
- * Get the user's home directory.
+ * Get the user's cache directory
  */
 static char *
 get_xdg_cache_home (void)
