@@ -452,7 +452,7 @@ become_daemon (void)
   /* If the user has specified a --logfile, use that ... */
   if (logfile[0] == '\0') {
     /* ... otherwise use the default logfile */
-    snprintf (logfile, MAXFNAME, "%s/.xsel.log", cachedir);
+    snprintf (logfile, MAXFNAME, "%s/xsel.log", cachedir);
   }
 
   /* Make sure to create the logfile with sane permissions */
