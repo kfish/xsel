@@ -340,38 +340,15 @@ _xs_strncpy (char * dest, const char * src, size_t n)
  * Get the user's home directory.
  */
 static char *
-get_homedir (void)
+get_xdg_cache_home (void)
 {
-  uid_t uid;
-  char * username, * homedir;
-  struct passwd * pw;
+  char * cachedir;
 
-  if ((homedir = getenv ("HOME")) != NULL) {
-    return homedir;
+  if ((cachedir = getenv ("XDG_CACHE_HOME")) != NULL) {
+    return cachedir;
+  } else {
+    return strcat(getenv ("HOME"), "/.cache")
   }
-
-  /* else ... go hunting for it */
-  uid = getuid ();
-
-  username = getenv ("LOGNAME");
-  if (!username) username = getenv ("USER");
-
-  if (username) {
-    pw = getpwnam (username);
-    if (pw && pw->pw_uid == uid) goto gotpw;
-  }
-
-  pw = getpwuid (uid);
-
-gotpw:
-
-  if (!pw) {
-    exit_err ("error retrieving passwd entry");
-  }
-
-  homedir = _xs_strdup (pw->pw_dir);
-
-  return homedir;
 }
 
 /*
@@ -459,7 +436,7 @@ become_daemon (void)
 {
   pid_t pid;
   int null_r_fd, null_w_fd, log_fd;
-  char * homedir;
+  char * cachedir;
 
   if (no_daemon) {
 	  /* If the user has specified a timeout, enforce it even if we don't
@@ -468,14 +445,14 @@ become_daemon (void)
 	  return;
   }
 
-  homedir = get_homedir ();
+  cachedir = get_xdg_cache_home();
 
   /* Check that we can open a logfile before continuing */
 
   /* If the user has specified a --logfile, use that ... */
   if (logfile[0] == '\0') {
     /* ... otherwise use the default logfile */
-    snprintf (logfile, MAXFNAME, "%s/.xsel.log", homedir);
+    snprintf (logfile, MAXFNAME, "%s/.xsel.log", cachedir);
   }
 
   /* Make sure to create the logfile with sane permissions */
@@ -503,8 +480,8 @@ become_daemon (void)
 
   umask (0);
 
-  if (chdir (homedir) == -1) {
-    print_debug (D_WARN, "Could not chdir to %s\n", homedir);
+  if (chdir (cachedir) == -1) {
+    print_debug (D_WARN, "Could not chdir to %s\n", cachedir);
     if (chdir ("/") == -1) {
       exit_err ("Error chdir to /");
     }
