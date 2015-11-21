@@ -344,11 +344,13 @@ get_xdg_cache_home (void)
 {
   char * cachedir;
 
-  if ((cachedir = getenv ("XDG_CACHE_HOME")) != NULL) {
-    return cachedir;
-  } else {
-    return strcat(getenv ("HOME"), "/.cache");
+  if ((cachedir = getenv ("XDG_CACHE_HOME")) == NULL) {
+    cachedir = strcat(getenv ("HOME"), "/.cache");
   }
+
+  mkdir(cachedir, S_IRWXU|S_IRGRP|S_IXGRP);
+
+  return cachedir;
 }
 
 /*
