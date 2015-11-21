@@ -347,7 +347,7 @@ get_xdg_cache_home (void)
   if ((cachedir = getenv ("XDG_CACHE_HOME")) != NULL) {
     return cachedir;
   } else {
-    return strcat(getenv ("HOME"), "/.cache")
+    return strcat(getenv ("HOME"), "/.cache");
   }
 }
 
