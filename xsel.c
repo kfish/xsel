@@ -1299,13 +1299,13 @@ change_property (Display * display, Window requestor, Atom property,
   print_debug (D_TRACE, "large data transfer");
 
 
-  /* Send a SelectionNotify event of type INCR */
+  /* Send a SelectionNotify event */
   ev.type = SelectionNotify;
   ev.display = display;
   ev.requestor = requestor;
   ev.selection = selection;
   ev.time = time;
-  ev.target = incr_atom; /* INCR */
+  ev.target = target;
   ev.property = property;
 
   XSelectInput (ev.display, ev.requestor, PropertyChangeMask);
