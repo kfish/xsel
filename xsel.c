@@ -620,14 +620,15 @@ get_append_property (XSelectionEvent * xsl, unsigned char ** buffer,
     print_debug (D_TRACE, "Got zero length property; end of INCR transfer");
     return False;
   } else if (format == 8) {
-    if (*offset + length > *alloc) {
-      *alloc = *offset + length;
+    if (*offset + length + 1 > *alloc) {
+      *alloc = *offset + length + 1;
       if ((*buffer = realloc (*buffer, *alloc)) == NULL) {
         exit_err ("realloc error");
       }
     }
     ptr = *buffer + *offset;
-    xs_strncpy (ptr, value, length);
+    memcpy (ptr, value, length);
+    ptr[length] = '\0';
     *offset += length;
     print_debug (D_TRACE, "Appended %d bytes to buffer\n", length);
   } else {
