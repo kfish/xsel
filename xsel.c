@@ -620,14 +620,15 @@ get_append_property (XSelectionEvent * xsl, unsigned char ** buffer,
     print_debug (D_TRACE, "Got zero length property; end of INCR transfer");
     return False;
   } else if (format == 8) {
-    if (*offset + length > *alloc) {
-      *alloc = *offset + length;
+    if (*offset + length + 1 > *alloc) {
+      *alloc = *offset + length + 1;
       if ((*buffer = realloc (*buffer, *alloc)) == NULL) {
         exit_err ("realloc error");
       }
     }
     ptr = *buffer + *offset;
-    xs_strncpy (ptr, value, length);
+    memcpy (ptr, value, length);
+    ptr[length] = '\0';
     *offset += length;
     print_debug (D_TRACE, "Appended %d bytes to buffer\n", length);
   } else {
@@ -1299,13 +1300,13 @@ change_property (Display * display, Window requestor, Atom property,
   print_debug (D_TRACE, "large data transfer");
 
 
-  /* Send a SelectionNotify event of type INCR */
+  /* Send a SelectionNotify event */
   ev.type = SelectionNotify;
   ev.display = display;
   ev.requestor = requestor;
   ev.selection = selection;
   ev.time = time;
-  ev.target = incr_atom; /* INCR */
+  ev.target = target;
   ev.property = property;
 
   XSelectInput (ev.display, ev.requestor, PropertyChangeMask);
