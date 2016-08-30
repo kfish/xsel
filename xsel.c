@@ -1395,14 +1395,16 @@ handle_targets (Display * display, Window requestor, Atom property,
                 Atom selection, Time time, MultTrack * mparent)
 {
   Atom * targets_cpy;
+  HandleResult r;
 
   targets_cpy = malloc (sizeof (supported_targets));
   memcpy (targets_cpy, supported_targets, sizeof (supported_targets));
 
-  return
-    change_property (display, requestor, property, XA_ATOM, 32,
+  r = change_property (display, requestor, property, XA_ATOM, 32,
                      PropModeReplace, (unsigned char *)targets_cpy,
                      NUM_TARGETS, selection, time, mparent);
+  free(targets_cpy);
+  return r;
 }
 
 /*
