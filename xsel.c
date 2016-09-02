@@ -949,7 +949,7 @@ initialise_read (unsigned char * read_buffer)
   int insize = in_statbuf.st_blksize;
   unsigned char * new_buffer = NULL;
 
-  if (S_ISREG (in_statbuf.st_mode)) {
+  if (S_ISREG (in_statbuf.st_mode) && in_statbuf.st_size > 0) {
     current_alloc += in_statbuf.st_size;
   } else {
     current_alloc += insize;
