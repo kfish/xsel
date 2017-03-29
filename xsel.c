@@ -2117,18 +2117,22 @@ main(int argc, char *argv[])
     exit (0);
   }
 
-  if (fstat (0, &in_statbuf) == -1) {
-    exit_err ("fstat error on stdin");
-  }
-  if (fstat (1, &out_statbuf) == -1) {
-    exit_err ("fstat error on stdout");
+  if (do_input || force_input) {
+    if (fstat (0, &in_statbuf) == -1) {
+      exit_err ("fstat error on stdin");
+    }
+    if (S_ISDIR(in_statbuf.st_mode)) {
+      exit_err ("-: Is a directory\n");
+    }
   }
 
-  if (S_ISDIR(in_statbuf.st_mode)) {
-    exit_err ("-: Is a directory\n");
-  }
-  if (S_ISDIR(out_statbuf.st_mode)) {
-    exit_err ("stdout: Is a directory\n");
+  if (do_output || force_output) {
+    if (fstat (1, &out_statbuf) == -1) {
+      exit_err ("fstat error on stdout");
+    }
+    if (S_ISDIR(out_statbuf.st_mode)) {
+      exit_err ("stdout: Is a directory\n");
+    }
   }
 
   timeout = timeout_ms * 1000;
