@@ -725,7 +725,7 @@ wait_selection (Atom selection, Atom request_target)
         } else if (target == incr_atom) {
           /* Handle INCR transfers */
           retval = wait_incr_selection (selection, &event.xselection,
-                                        *(int *)value);
+                                        *(long *)value);
           keep_waiting = False;
         } else if (target != utf8_atom && target != XA_STRING &&
                    target != compound_text_atom &&
@@ -1271,7 +1271,7 @@ change_property (Display * display, Window requestor, Atom property,
                  Atom selection, Time time, MultTrack * mparent)
 {
   XSelectionEvent ev;
-  int nr_bytes;
+  long nr_bytes;
   IncrTrack * it;
 
   print_debug (D_TRACE, "change_property ()");
