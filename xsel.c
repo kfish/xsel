@@ -343,12 +343,21 @@ static char *
 get_xdg_cache_home (void)
 {
   char * cachedir;
+  char * homedir;
+  static const char * slashbasename = "/.cache";
 
   if ((cachedir = getenv ("XDG_CACHE_HOME")) == NULL) {
-    cachedir = strcat(getenv ("HOME"), "/.cache");
+    if ((homedir = getenv ("HOME")) == NULL) {
+      exit_err ("no HOME directory");
+    }
+    cachedir = xs_malloc (strlen (homedir) + strlen (slashbasename) + 1);
+    strcpy (cachedir, homedir);
+    strcat (cachedir, slashbasename);
+  } else {
+    cachedir = _xs_strdup (cachedir);
   }
 
-  mkdir(cachedir, S_IRWXU|S_IRGRP|S_IXGRP);
+  mkdir (cachedir, S_IRWXU|S_IRGRP|S_IXGRP);
 
   return cachedir;
 }
@@ -515,6 +524,8 @@ become_daemon (void)
   }
 
   set_daemon_timeout ();
+
+  free (cachedir);
 }
 
 /*
