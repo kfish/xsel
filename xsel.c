@@ -834,12 +834,12 @@ get_selection_text (Atom selection)
 static unsigned char *
 copy_sel (unsigned char * s)
 {
-  unsigned char * new_sel = NULL;
-
-  new_sel = xs_strdup (s);
-  current_alloc = total_input = xs_strlen (s);
-
-  return new_sel;
+  if (s) {
+    current_alloc = total_input = xs_strlen (s);
+    return xs_strdup (s);
+  }
+  current_alloc = total_input = 0;
+  return NULL;
 }
 
 /*
