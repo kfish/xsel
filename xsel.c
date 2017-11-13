@@ -599,7 +599,8 @@ get_append_property (XSelectionEvent * xsl, unsigned char ** buffer,
 
   debug_property (D_TRACE, xsl->requestor, xsl->property, target, length);
 
-  if (target != XA_STRING && target != utf8_atom) {
+  if (target != XA_STRING && target != utf8_atom &&
+      target != compound_text_atom) {
     print_debug (D_OBSC, "target %s not XA_STRING nor UTF8_STRING in get_append_property()",
                  get_atom_name (target));
     free (*buffer);
@@ -1330,7 +1331,7 @@ change_property (Display * display, Window requestor, Atom property,
   it->chunk = MIN (it->max_elements, it->nelements - it->offset);
 
   /* Wait for that property to get deleted */
-  print_debug (D_TRACE, "Waiting on intial property deletion (%s)",
+  print_debug (D_TRACE, "Waiting on initial property deletion (%s)",
                get_atom_name (it->property));
 
   return HANDLE_INCOMPLETE;
