@@ -2151,7 +2151,8 @@ main(int argc, char *argv[])
 
   display = XOpenDisplay (display_name);
   if (display==NULL) {
-    exit_err ("Can't open display: %s\n", display_name);
+    exit_err ("Can't open display: %s\n",
+              display_name ? display_name : "(null)");
   }
   root = XDefaultRootWindow (display);
   
