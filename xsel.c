@@ -233,7 +233,8 @@ static char *
 get_atom_name (Atom atom)
 {
   char * ret;
-  static char atom_name[MAXLINE+1];
+  static char atom_name[MAXLINE+2];  /* unused extra char to avoid
+                                        string-op-truncation warning */
 
   if (atom == None) return "None";
   if (atom == XA_STRING) return "STRING";
@@ -249,7 +250,7 @@ get_atom_name (Atom atom)
   if (atom == utf8_atom) return "UTF8_STRING";
 
   ret = XGetAtomName (display, atom);
-  strncpy (atom_name, ret, sizeof (atom_name));
+  strncpy (atom_name, ret, MAXLINE+1);
   if (atom_name[MAXLINE] != '\0')
     {
       atom_name[MAXLINE-3] = '.';
@@ -328,7 +329,7 @@ static char *
 _xs_strncpy (char * dest, const char * src, size_t n)
 {
   if (n > 0) {
-    strncpy (dest, src, n);
+    strncpy (dest, src, n-1);
     dest[n-1] = '\0';
   }
   return dest;
