@@ -91,6 +91,7 @@ static int current_alloc = 0;
 
 static long timeout = 0;
 static struct itimerval timer;
+static struct itimerval zerot;
 
 #define USEC_PER_SEC 1000000
 
@@ -758,7 +759,8 @@ wait_selection (Atom selection, Atom request_target)
   /* Now that we've received the SelectionNotify event, clear any
    * remaining timeout. */
   if (timeout > 0) {
-    setitimer (ITIMER_REAL, (struct itimerval *)0, (struct itimerval *)0);
+    // setitimer (ITIMER_REAL, (struct itimerval *)0, (struct itimerval *)0);
+    setitimer (ITIMER_REAL, &zerot, (struct itimerval *)0);
   }
 
   return retval;
@@ -2031,6 +2033,11 @@ main(int argc, char *argv[])
   unsigned char * old_sel = NULL, * new_sel = NULL;
   char * display_name = NULL;
   long timeout_ms = 0L;
+
+  zerot.it_value.tv_sec = 0;
+  zerot.it_value.tv_usec = 0;
+  zerot.it_interval.tv_sec = 0;
+  zerot.it_interval.tv_usec = 0;
 
   progname = argv[0];
 
