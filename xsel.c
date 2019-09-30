@@ -2034,6 +2034,7 @@ main(int argc, char *argv[])
   int i, s=0;
   unsigned char * old_sel = NULL, * new_sel = NULL;
   char * display_name = NULL;
+  char * window_name = "xsel";
   long timeout_ms = 0L;
 
   zerot.it_value.tv_sec = 0;
@@ -2110,6 +2111,9 @@ main(int argc, char *argv[])
     } else if (OPT("--display")) {
       i++; if (i >= argc) goto usage_err;
       display_name = argv[i];
+    } else if (OPT("--windowName")) {
+      i++; if (i >= argc) goto usage_err;
+      window_name = argv[i];
     } else if (OPT("--selectionTimeout") || OPT("-t")) {
       i++; if (i >= argc) goto usage_err;
       timeout_ms = strtol(argv[i], (char **)NULL, 10);
@@ -2172,7 +2176,9 @@ main(int argc, char *argv[])
 
   print_debug (D_INFO, "Window id: 0x%x (unmapped)", window);
 
-  /* Set window class */
+  /* Set window name and class */
+  XStoreName(display, window, window_name);
+  
   class_hints = XAllocClassHint();
   if (class_hints==NULL) {
     exit_err ("Can't allocate class hints memory\n");
