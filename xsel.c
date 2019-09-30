@@ -31,6 +31,7 @@
 #include <signal.h>
 #include <X11/Xlib.h>
 #include <X11/Xatom.h>
+#include <X11/Xutil.h>
 
 #include "xsel.h"
 
@@ -2028,6 +2029,7 @@ main(int argc, char *argv[])
   Bool want_clipboard = False, do_delete = False;
   Window root;
   Atom selection = XA_PRIMARY, test_atom;
+  XClassHint * class_hints;
   int black;
   int i, s=0;
   unsigned char * old_sel = NULL, * new_sel = NULL;
@@ -2169,6 +2171,16 @@ main(int argc, char *argv[])
   window = XCreateSimpleWindow (display, root, 0, 0, 1, 1, 0, black, black);
 
   print_debug (D_INFO, "Window id: 0x%x (unmapped)", window);
+
+  /* Set window class */
+  class_hints = XAllocClassHint();
+  if (class_hints==NULL) {
+    exit_err ("Can't allocate class hints memory\n");
+  }
+  class_hints->res_name   = "xsel";
+  class_hints->res_class  = "XSel";
+  XSetClassHint(display, window, class_hints);
+  XFree(class_hints);
 
   /* Get a timestamp */
   XSelectInput (display, window, PropertyChangeMask);
