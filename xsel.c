@@ -2281,7 +2281,6 @@ main(int argc, char *argv[])
              old_sel[xs_strlen (old_sel) - 1] != '\n')
            {
              fflush (stdout);
-             fprintf (stderr, "\n\\ No newline at end of selection\n");
            }
       }
   }
