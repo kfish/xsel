@@ -123,7 +123,6 @@ usage (void)
   printf ("  -i, --input           Read standard input into the selection\n\n");
   printf ("Output options\n");
   printf ("  -o, --output          Write the selection to standard output\n");
-  printf ("  --trim                If output ends in a newline character ('\\n'), remove it\n\n");
   printf ("Action options\n");
   printf ("  -c, --clear           Clear the selection\n");
   printf ("  -d, --delete          Request that the selection be cleared and that\n");
@@ -144,6 +143,7 @@ usage (void)
   printf ("                        selection must be retrieved. A value of 0 (zero)\n");
   printf ("                        specifies no timeout (default)\n\n");
   printf ("Miscellaneous options\n");
+  printf ("  --trim                Remove newline ('\\n') char from end of input / output\n");
   printf ("  -l, --logfile         Specify file to log errors to when detached.\n");
   printf ("  -n, --nodetach        Do not detach from the controlling terminal. Without\n");
   printf ("                        this option, xsel will fork to become a background\n");
@@ -2092,6 +2092,7 @@ main(int argc, char *argv[])
       force_input = True;
       do_output = False;
       do_follow = True;
+      trim_trailing_newline = False;
     } else if (OPT("--zeroflush") || OPT("-z")) {
       force_input = True;
       do_output = False;
@@ -2310,6 +2311,14 @@ main(int argc, char *argv[])
     new_sel = initialise_read (new_sel);
     if(!do_follow)
       new_sel = read_input (new_sel, False);
+
+    if(trim_trailing_newline) {
+      unsigned int sel_len = xs_strlen(new_sel);
+      if (new_sel[sel_len - 1 ] == '\n') {
+        new_sel[sel_len - 1] = '\0';
+      }
+    }
+ 
     set_selection__daemon (selection, new_sel);
   }
   
