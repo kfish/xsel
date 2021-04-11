@@ -122,7 +122,8 @@ usage (void)
   printf ("  -z, --zeroflush       Overwrites selection when zero ('\\0') is received\n");
   printf ("  -i, --input           Read standard input into the selection\n\n");
   printf ("Output options\n");
-  printf ("  -o, --output          Write the selection to standard output\n\n");
+  printf ("  -o, --output          Write the selection to standard output\n");
+  printf ("  --trim                If output ends in a newline character ('\\n'), remove it\n\n");
   printf ("Action options\n");
   printf ("  -c, --clear           Clear the selection\n");
   printf ("  -d, --delete          Request that the selection be cleared and that\n");
