@@ -2026,6 +2026,7 @@ main(int argc, char *argv[])
   Bool do_input = False, do_output = False;
   Bool force_input = False, force_output = False;
   Bool want_clipboard = False, do_delete = False;
+  Bool trim_trailing_newline = False;
   Window root;
   Atom selection = XA_PRIMARY, test_atom;
   int black;
@@ -2101,6 +2102,8 @@ main(int argc, char *argv[])
       selection = XA_SECONDARY;
     } else if (OPT("--clipboard") || OPT("-b")) {
       want_clipboard = True;
+    } else if (OPT("--trim")) {
+      trim_trailing_newline = True;
     } else if (OPT("--keep") || OPT("-k")) {
       do_keep = True;
     } else if (OPT("--exchange") || OPT("-x")) {
@@ -2274,15 +2277,21 @@ main(int argc, char *argv[])
   if (do_output || force_output) {
     /* Get the current selection */
     old_sel = get_selection_text (selection);
-    if (old_sel)
-      {
-         printf ("%s", old_sel);
-         if (!do_append && *old_sel != '\0' && isatty(1) &&
-             old_sel[xs_strlen (old_sel) - 1] != '\n')
-           {
-             fflush (stdout);
-           }
+    if (old_sel) {
+
+      if (trim_trailing_newline) {
+        unsigned int old_sel_len = xs_strlen(old_sel);
+        if (old_sel[old_sel_len - 1 ] == '\n') {
+          old_sel[old_sel_len - 1] = '\0';
+        }
       }
+
+      printf ("%s", old_sel);
+      if (!do_append && *old_sel != '\0' && isatty(1) &&
+          old_sel[xs_strlen (old_sel) - 1] != '\n') {
+        fflush (stdout);
+      }
+    }
   }
 
   /* handle input and clear modes */
