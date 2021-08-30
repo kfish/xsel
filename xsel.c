@@ -138,6 +138,7 @@ usage (void)
   printf ("X options\n");
   printf ("  --display displayname\n");
   printf ("                        Specify the connection to the X server\n");
+  printf ("  -m wm, --name wm      Name with the process will be identified\n");
   printf ("  -t ms, --selectionTimeout ms\n");
   printf ("                        Specify the timeout in milliseconds within which the\n");
   printf ("                        selection must be retrieved. A value of 0 (zero)\n");
@@ -2032,6 +2033,7 @@ main(int argc, char *argv[])
   int i, s=0;
   unsigned char * old_sel = NULL, * new_sel = NULL;
   char * display_name = NULL;
+  char * window_name = NULL;
   long timeout_ms = 0L;
 
   zerot.it_value.tv_sec = 0;
@@ -2112,6 +2114,9 @@ main(int argc, char *argv[])
       i++; if (i >= argc) goto usage_err;
       timeout_ms = strtol(argv[i], (char **)NULL, 10);
       if (timeout_ms < 0) timeout_ms = 0;
+    } else if (OPT("--name") || OPT("-m")) {
+      i++; if (i >= argc) goto usage_err;
+      window_name = argv[i];
     } else if (OPT("--nodetach") || OPT("-n")) {
       no_daemon = True;
     } else if (OPT("--delete") || OPT("-d")) {
@@ -2169,6 +2174,11 @@ main(int argc, char *argv[])
   window = XCreateSimpleWindow (display, root, 0, 0, 1, 1, 0, black, black);
 
   print_debug (D_INFO, "Window id: 0x%x (unmapped)", window);
+  
+  if (window_name != NULL) {
+    XStoreName (display, window, window_name);
+    print_debug (D_INFO, "The name %s is assigned to the window", window_name);
+  }
 
   /* Get a timestamp */
   XSelectInput (display, window, PropertyChangeMask);
