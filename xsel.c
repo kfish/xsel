@@ -1667,6 +1667,7 @@ handle_selection_request (XEvent event, unsigned char * sel)
       ev.property = None;
     } else {
       /* Handle MULTIPLE request */
+      ev.property = xsr->property;
       hr = handle_multiple (ev.display, ev.requestor, ev.property, sel,
                             ev.selection, ev.time, NULL);
     }
