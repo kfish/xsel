@@ -143,6 +143,7 @@ usage (void)
   printf ("                        selection must be retrieved. A value of 0 (zero)\n");
   printf ("                        specifies no timeout (default)\n\n");
   printf ("Miscellaneous options\n");
+  printf ("  --trim                Remove newline ('\\n') char from end of input / output\n");
   printf ("  -l, --logfile         Specify file to log errors to when detached.\n");
   printf ("  -n, --nodetach        Do not detach from the controlling terminal. Without\n");
   printf ("                        this option, xsel will fork to become a background\n");
@@ -2026,6 +2027,7 @@ main(int argc, char *argv[])
   Bool do_input = False, do_output = False;
   Bool force_input = False, force_output = False;
   Bool want_clipboard = False, do_delete = False;
+  Bool trim_trailing_newline = False;
   Window root;
   Atom selection = XA_PRIMARY, test_atom;
   int black;
@@ -2090,6 +2092,7 @@ main(int argc, char *argv[])
       force_input = True;
       do_output = False;
       do_follow = True;
+      trim_trailing_newline = False;
     } else if (OPT("--zeroflush") || OPT("-z")) {
       force_input = True;
       do_output = False;
@@ -2101,6 +2104,8 @@ main(int argc, char *argv[])
       selection = XA_SECONDARY;
     } else if (OPT("--clipboard") || OPT("-b")) {
       want_clipboard = True;
+    } else if (OPT("--trim")) {
+      trim_trailing_newline = True;
     } else if (OPT("--keep") || OPT("-k")) {
       do_keep = True;
     } else if (OPT("--exchange") || OPT("-x")) {
@@ -2274,15 +2279,21 @@ main(int argc, char *argv[])
   if (do_output || force_output) {
     /* Get the current selection */
     old_sel = get_selection_text (selection);
-    if (old_sel)
-      {
-         printf ("%s", old_sel);
-         if (!do_append && *old_sel != '\0' && isatty(1) &&
-             old_sel[xs_strlen (old_sel) - 1] != '\n')
-           {
-             fflush (stdout);
-           }
+    if (old_sel) {
+
+      if (trim_trailing_newline) {
+        unsigned int old_sel_len = xs_strlen(old_sel);
+        if (old_sel[old_sel_len - 1 ] == '\n') {
+          old_sel[old_sel_len - 1] = '\0';
+        }
       }
+
+      printf ("%s", old_sel);
+      if (!do_append && *old_sel != '\0' && isatty(1) &&
+          old_sel[xs_strlen (old_sel) - 1] != '\n') {
+        fflush (stdout);
+      }
+    }
   }
 
   /* handle input and clear modes */
@@ -2300,6 +2311,14 @@ main(int argc, char *argv[])
     new_sel = initialise_read (new_sel);
     if(!do_follow)
       new_sel = read_input (new_sel, False);
+
+    if(trim_trailing_newline) {
+      unsigned int sel_len = xs_strlen(new_sel);
+      if (new_sel[sel_len - 1 ] == '\n') {
+        new_sel[sel_len - 1] = '\0';
+      }
+    }
+ 
     set_selection__daemon (selection, new_sel);
   }
   
