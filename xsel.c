@@ -31,6 +31,7 @@
 #include <signal.h>
 #include <X11/Xlib.h>
 #include <X11/Xatom.h>
+#include <X11/Xutil.h>
 
 #include "xsel.h"
 
@@ -2034,11 +2035,12 @@ main(int argc, char *argv[])
   Bool trim_trailing_newline = False;
   Window root;
   Atom selection = XA_PRIMARY, test_atom;
+  XClassHint * class_hints;
   int black;
   int i, s=0;
   unsigned char * old_sel = NULL, * new_sel = NULL;
   char * display_name = NULL;
-  char * window_name = NULL;
+  char * window_name = "xsel";
   long timeout_ms = 0L;
 
   zerot.it_value.tv_sec = 0;
@@ -2118,6 +2120,9 @@ main(int argc, char *argv[])
     } else if (OPT("--display")) {
       i++; if (i >= argc) goto usage_err;
       display_name = argv[i];
+    } else if (OPT("--windowName")) {
+      i++; if (i >= argc) goto usage_err;
+      window_name = argv[i];
     } else if (OPT("--selectionTimeout") || OPT("-t")) {
       i++; if (i >= argc) goto usage_err;
       timeout_ms = strtol(argv[i], (char **)NULL, 10);
@@ -2187,6 +2192,18 @@ main(int argc, char *argv[])
     XStoreName (display, window, window_name);
     print_debug (D_INFO, "The name %s is assigned to the window", window_name);
   }
+
+  /* Set window name and class */
+  XStoreName(display, window, window_name);
+  
+  class_hints = XAllocClassHint();
+  if (class_hints==NULL) {
+    exit_err ("Can't allocate class hints memory\n");
+  }
+  class_hints->res_name   = "xsel";
+  class_hints->res_class  = "XSel";
+  XSetClassHint(display, window, class_hints);
+  XFree(class_hints);
 
   /* Get a timestamp */
   XSelectInput (display, window, PropertyChangeMask);
