@@ -1583,13 +1583,14 @@ handle_multiple (Display * display, Window requestor, Atom property,
 {
   MultTrack * mt;
   int format;
+  Atom type;
   unsigned long bytesafter;
   HandleResult retval = HANDLE_OK;
 
   mt = xs_malloc (sizeof (MultTrack));
 
   XGetWindowProperty (display, requestor, property, 0L, 1000000,
-                      False, (Atom)AnyPropertyType, &mt->property,
+                      False, (Atom)AnyPropertyType, &type,
                       &format, &mt->length, &bytesafter,
                       (unsigned char **)&mt->atoms);
 
@@ -1601,6 +1602,7 @@ handle_multiple (Display * display, Window requestor, Atom property,
   mt->display = display;
   mt->requestor = requestor;
   mt->sel = sel;
+  mt->property = property;
   mt->selection = selection;
   mt->time = time;
   mt->index = 0;
@@ -1668,6 +1670,7 @@ handle_selection_request (XEvent event, unsigned char * sel)
       ev.property = None;
     } else {
       /* Handle MULTIPLE request */
+      ev.property = xsr->property;
       hr = handle_multiple (ev.display, ev.requestor, ev.property, sel,
                             ev.selection, ev.time, NULL);
     }
