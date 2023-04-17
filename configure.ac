@@ -7,6 +7,7 @@ AM_CONFIG_HEADER(config.h)
 # Checks for programs.
 AC_ISC_POSIX
 AC_PROG_CC
+AC_PROG_CC_C99
 AC_PROG_CPP
 AC_PROG_INSTALL
 AC_PROG_MAKE_SET
@@ -24,7 +25,7 @@ AC_SEARCH_LIBS([XOpenDisplay], [X11], [], [AC_MSG_ERROR([libX11 is required])])
 dnl Add some useful warnings if we have gcc.
 dnl changequote(,)dnl
 if test "x$ac_cv_prog_gcc" = xyes ; then
-  CFLAGS="$CFLAGS -fno-strict-aliasing -Wall -Werror -g -std=gnu99 -Wdeclaration-after-statement -Wno-unused"
+  CFLAGS="$CFLAGS -fno-strict-aliasing -Wall -Wdeclaration-after-statement -Wno-unused"
 fi
 dnl changequote([,])dnl
 
