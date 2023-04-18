@@ -1,5 +1,5 @@
 # Process this file with autoconf to produce a configure script.
-AC_INIT([xsel],[1.2.0])
+AC_INIT([xsel],[1.2.1])
 AM_INIT_AUTOMAKE([1.14 foreign dist-xz subdir-objects])
 AC_CONFIG_SRCDIR([xsel.c])
 AC_CONFIG_HEADERS([config.h])
